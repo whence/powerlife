@@ -1,0 +1,18 @@
+﻿<Window x:Class="Powercards.WinPresent.PlayerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Untitled Player" Height="426" Width="1048" WindowStyle="SingleBorderWindow">
+    <Grid>
+        <TextBox Name="txtInput" Width="264" Height="23" Margin="1,1,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" />
+        
+        <Button Content="Impersonate" Name="btnSubmit" 
+                Height="23" HorizontalAlignment="Left" Margin="271,1,0,0" VerticalAlignment="Top" Width="79"
+                IsDefault="True" Click="btnSubmit_Click" IsEnabled="True" />
+        <TextBlock Height="20" HorizontalAlignment="Left" Margin="356,4,0,0" Name="txtErrorMessage" Text="" VerticalAlignment="Top" Width="658" Foreground="Red" />
+        <TextBox Height="150" HorizontalAlignment="Left" Margin="1,237,0,0" Name="txtLog" VerticalAlignment="Top" Width="349" VerticalScrollBarVisibility="Auto" IsReadOnly="True" TextWrapping="Wrap" />
+        <TextBox Height="201" HorizontalAlignment="Left" IsReadOnly="True" Margin="1,30,0,0" Name="txtDialogView" TextWrapping="Wrap" VerticalAlignment="Top" VerticalScrollBarVisibility="Auto" Width="349" />
+        <TextBox Height="357" HorizontalAlignment="Left" IsReadOnly="True" Margin="356,30,0,0" Name="txtPlayerView0" TextWrapping="Wrap" VerticalAlignment="Top" VerticalScrollBarVisibility="Auto" Width="226" />
+        <TextBox Height="357" HorizontalAlignment="Left" IsReadOnly="True" Margin="588,30,0,0" Name="txtPlayerView1" TextWrapping="Wrap" VerticalAlignment="Top" VerticalScrollBarVisibility="Auto" Width="226" />
+        <TextBox Height="357" HorizontalAlignment="Left" IsReadOnly="True" Margin="820,30,0,0" Name="txtSupplyView" TextWrapping="Wrap" VerticalAlignment="Top" VerticalScrollBarVisibility="Auto" Width="194" />
+    </Grid>
+</Window>

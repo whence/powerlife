@@ -1,0 +1,9 @@
+﻿<Window x:Class="Powercards.WinPresent.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Powercards" Height="108" Width="114" WindowStyle="SingleBorderWindow">
+    <StackPanel>
+        <Button Content="Server" Name="btnServer" Padding="3" Margin="3" Click="btnServer_Click" />
+        <Button Content="Client" Name="btnClient" Padding="3" Margin="3" Click="btnClient_Click" />
+    </StackPanel>
+</Window>

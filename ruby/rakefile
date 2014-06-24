@@ -1,0 +1,7 @@
+require 'rspec/core/rake_task'
+
+desc 'run rspec'
+RSpec::Core::RakeTask.new do |t|
+  t.pattern = 'test.rb'
+  t.ruby_opts = '-w'
+end

@@ -1,0 +1,546 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>IdeaFactory.Util</name>
+    </assembly>
+    <members>
+        <member name="T:IdeaFactory.Util.Maths">
+            <summary>
+            Math related helper methods
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.Maths.IsInRange(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Both min and max are inclusive
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.Maths.RandomInt32">
+            <summary>
+            This returns a truely random Int32 (between Int.Min to IntMax). 
+            Use this as seed for System.Random to avoid security issue
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.CompositeKey">
+            <summary>
+            A composite key consist of two postive (including 0) integer keys.
+            Can be used as key in dictionary, or stored in a set
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.CustomException`1">
+            <summary>
+            A generic exception associated with a type. 
+            This is a balanced approach between "Everything System.Exception" and a "Full blown exception policy". 
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.Enumeration">
+            <summary>
+            Helper methods for enumerations
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.SortableReadonlyBindingList`1">
+            <summary>
+            An implementation if IBindingList that support sorting but disallow adding and removing items
+            </summary>
+            <typeparam name="T">type of the item in the binding list</typeparam>
+        </member>
+        <member name="M:IdeaFactory.Util.SortableReadonlyBindingList`1.#ctor(System.Collections.Generic.List{`0})">
+            <param name="list">Items will be modified (sorted), use another ctor overload if you want to reuse the items later</param>
+        </member>
+        <member name="T:IdeaFactory.Util.HashCodeCombiner">
+            <summary>
+            To combine two or more hash codes. 
+            Note that this combiner does not guarantee hash code uniqueness. 
+            This is merely the best algorithm for combining hash codes I have found so far. 
+            </summary>
+            <remarks>
+            Check test cases for two usage patterns, quick or fluent. 
+            To assess the hash code quality, use HashCodeQualityCheck
+            </remarks>
+            <seealso cref="!:http://musingmarc.blogspot.com/2008/03/sometimes-you-make-hash-of-things.html">Where the algorithm comes from</seealso>
+            <seealso cref="!:System.Web.Util.HashCodeCombiner">System Build-In usage</seealso>
+            <seealso cref="!:http://blog.roblevine.co.uk/?p=19">Alternates, comes with graph analysis, but with similar distribution with the current one in use</seealso>
+        </member>
+        <member name="M:IdeaFactory.Util.HashCodeCombiner.Combine(System.Int32,System.Int32)">
+            <summary>
+            Use this to do a quick two HashCode combination
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.HashCodeCombiner.AppendHashCode(System.Int32)">
+            <summary>
+            Use this to do unlimited number of combinations
+            </summary>
+        </member>
+        <member name="P:IdeaFactory.Util.HashCodeCombiner.CombinedHashCode">
+            <summary>
+            Retrive the combined HashCode
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.EnforcementFailedException">
+            <summary>
+            A specific exception for Enforce methods
+            </summary>
+        </member>
+        <member name="F:IdeaFactory.Util.CollectionCompareResult.Contained">
+            <summary>
+            Collection1 is contained by collection2
+            </summary>
+        </member>
+        <member name="F:IdeaFactory.Util.CollectionCompareResult.Containing">
+            <summary>
+            Collection1 contains collection2 
+            </summary>
+        </member>
+        <member name="F:IdeaFactory.Util.CollectionCompareResult.Equal">
+            <summary>
+            Both collections contains exactly the same items 
+            </summary>
+        </member>
+        <member name="F:IdeaFactory.Util.CollectionCompareResult.Exclusive">
+            <summary>
+            Two collections don't share any common items
+            </summary>
+        </member>
+        <member name="F:IdeaFactory.Util.CollectionCompareResult.Partial">
+            <summary>
+            Collection1 contains some items in collection2, and vise versa
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.Invoker">
+            <summary>
+            A handy shortcut for invoking events
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.Chars">
+            <summary>
+            <para>Contains frequent used chars</para>
+            <para>WARNING: Do not use Chars for the first charactor in the string concatation, 
+            as the char may be treated as an integer. In that case, Use string.Empty as the first part of the concatation</para>
+            </summary>
+        </member>
+        <member name="F:IdeaFactory.Util.Chars.Hyphen">
+            <summary>
+            -
+            </summary>
+        </member>
+        <member name="F:IdeaFactory.Util.Chars.Comma">
+            <summary>
+            ,
+            </summary>
+        </member>
+        <member name="F:IdeaFactory.Util.Chars.Colon">
+            <summary>
+            :
+            </summary>
+        </member>
+        <member name="F:IdeaFactory.Util.Chars.Period">
+            <summary>
+            .
+            </summary>
+        </member>
+        <member name="F:IdeaFactory.Util.Chars.SemiColon">
+            <summary>
+            ;
+            </summary>
+        </member>
+        <member name="F:IdeaFactory.Util.Chars.BracketLeft">
+            <summary>
+            (
+            </summary>
+        </member>
+        <member name="F:IdeaFactory.Util.Chars.BracketRight">
+            <summary>
+            )
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.SingletonWrapper`1">
+            <summary>
+            Wrap a class that is intended to be used as singleton. 
+            Provide thread-safe and lazy instantiation to the single instance based on pattern from
+            <see cref="!:http://www.yoda.arachsys.com/csharp/singleton.html"/>.
+            Although instantiation is thread-safe, the wrapper does not lock the access to the instance. 
+            Thus it is the responsibility of the singleton instance itself to ensure thread-safe inside the instance.
+            </summary>
+            <typeparam name="T">type of the single instance, must have a public default constructor without parameters</typeparam>
+        </member>
+        <member name="M:IdeaFactory.Util.IMatcher`2.IsMatch(`0,`1)">
+            <summary>
+            True if x and y match
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.IntCycler">
+            <summary>
+            To cycle an integer from min value to max value (both inclusive)
+            </summary>
+        </member>
+        <member name="P:IdeaFactory.Util.IntCycler.NumberOfCyclesStepped">
+            <summary>
+            The number of cycles stepped forward (positive) or backward (negative). 
+            A cycle is stepped when current value is the same as initial value again. 
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.CapacityChecker">
+            <summary>
+            Use this utility when you capacity of a collection can be determined at compile time.
+            Mismatch between initial capacity and final item count will cause exception. 
+            This helps synchronizing capacity and count during code changes. 
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.DateTimeUtil.IsDateOnly(System.DateTime)">
+            <summary>
+            Whether the datetime contains the date info only, i.e. time is always 00:00:00am
+            </summary>
+            <param name="datetime"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdeaFactory.Util.DateTimeUtil.IsDateAndHourOnly(System.DateTime)">
+            <summary>
+            Whether the datetime contains the date and hour info only. E.g. 1990-10-01 09:00:00am
+            </summary>
+            <param name="datetime"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdeaFactory.Util.DateTimeUtil.IsHour(System.Int32)">
+            <summary>
+            Whether the hour is valid, i.e. between 0 to 23 (inclusive)
+            </summary>
+            <param name="hour"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdeaFactory.Util.DateTimeUtil.DayDiff(System.DateTime,System.DateTime)">
+            <summary>
+            Return the day difference between two DateTimes.
+            Negative if x is later than y
+            </summary>
+            <param name="x"></param>
+            <param name="y"></param>
+            <exception cref="T:System.OverflowException">
+            If hour difference is larger than Int32.MaxValue
+            </exception>
+            <returns></returns>
+        </member>
+        <member name="M:IdeaFactory.Util.DateTimeUtil.HourDiff(System.DateTime,System.DateTime)">
+            <summary>
+            Return the hour difference between two DateTimes.
+            Negative if x is later than y
+            </summary>
+            <param name="x"></param>
+            <param name="y"></param>
+            <exception cref="T:System.OverflowException">
+            If hour difference is larger than Int32.MaxValue
+            </exception>
+            <returns></returns>
+        </member>
+        <member name="M:IdeaFactory.Util.DateTimeUtil.MinuteDiff(System.DateTime,System.DateTime)">
+            <summary>
+            Return the minute difference between two DateTimes.
+            Negative if x is later than y
+            </summary>
+            <param name="x"></param>
+            <param name="y"></param>
+            <exception cref="T:System.OverflowException">
+            If minute difference is larger than Int32.MaxValue
+            </exception>
+            <returns></returns>
+        </member>
+        <member name="M:IdeaFactory.Util.DateTimeUtil.SecondDiff(System.DateTime,System.DateTime)">
+            <summary>
+            Return the second difference between two DateTimes.
+            Negative if x is later than y
+            </summary>
+            <param name="x"></param>
+            <param name="y"></param>
+            <exception cref="T:System.OverflowException">
+            If second difference is larger than Int32.MaxValue
+            </exception>
+            <returns></returns>
+        </member>
+        <member name="M:IdeaFactory.Util.DateTimeUtil.Min(System.DateTime,System.DateTime)">
+            <summary>
+            Pick the earlier datetime between two datetimes
+            </summary>
+            <param name="x"></param>
+            <param name="y"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdeaFactory.Util.DateTimeUtil.Max(System.DateTime,System.DateTime)">
+            <summary>
+            Pick the later datetime between two datetimes
+            </summary>
+            <param name="x"></param>
+            <param name="y"></param>
+            <returns></returns>
+        </member>
+        <member name="T:IdeaFactory.Util.Texter">
+            <summary>
+            Helper class for common text manipulations
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.Texter.NormalizeNewLine(System.String)">
+            <summary>
+            Replace the partial new line (\n or \r only) to a fully compliant Environment.NewLine
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.Texter.NormalizeNewLine(System.String,System.String)">
+            <summary>
+            Replace the partial new line (\n or \r only) to a replacement
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.Texter.NormalizeNewLine(System.String,System.Char)">
+            <summary>
+            Replace the partial new line (\n or \r only) to a replacement
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.Texter.GenerateOrdinalPostfix(System.Int32)">
+            <summary>
+            <para>Generate the postfix for ordinal numbers. E.g. th for 13. </para>
+            <para>Note that the only generate the postfix. You may need to combine the postfix with the number itself. </para>
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.Texter.ContainsNumbersOnly(System.String)">
+            <summary>
+            <para>Test if a string contains number characters only. </para>
+            <para>Note that this is not the same as int/double's TryParse method, 
+            as plus, minus and dot signs are not number characters. </para>
+            <para>i.e. A negative number for this method will return false whereas TryParse will return true.</para>
+            <para>Also passing null or string.Empty will return false</para>
+            </summary>
+        </member>
+        <member name="P:IdeaFactory.Util.Texter.NewLine">
+            <summary>
+            A locally cached version of NewLine, as opposed to Environment.NewLine which returns new string for every call.
+            Use this in the code that requires absolute performance. 
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.Table`3">
+            <summary>
+            A simple tabular data structure that stored the columns, rows and cell values
+            </summary>
+            <typeparam name="TColumn">type of the column</typeparam>
+            <typeparam name="TRow">type of row</typeparam>
+            <typeparam name="TValue">type of cell value</typeparam>
+        </member>
+        <member name="M:IdeaFactory.Util.CollectionUtil.Pick``1(System.Collections.Generic.IList{``0},System.Int32)">
+            <summary>
+            Pick a specifc number of items from the pool
+            </summary>
+            <example>Check test case for examples</example>
+            <typeparam name="T"></typeparam>
+            <param name="pool"></param>
+            <param name="numberToPick"></param>
+            <returns>All possible combinations</returns>
+        </member>
+        <member name="M:IdeaFactory.Util.CollectionUtil.Sort``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IComparer{``0})">
+            <summary>
+            Sort items with a comparer. This method returns a new List with items sorted. 
+            The orders in the original items will not be altered.
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="items"></param>
+            <param name="comparer"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdeaFactory.Util.CollectionUtil.Sort``1(System.Collections.Generic.IEnumerable{``0},System.Comparison{``0})">
+            <summary>
+            Sort items with a comparer delegate. This method returns a new List with items sorted. 
+            The orders in the original items will not be altered.
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="items"></param>
+            <param name="comparer"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdeaFactory.Util.CollectionUtil.GetFirst``1(System.Collections.Generic.IEnumerable{``0})">
+            <summary>
+            Get the first item in the IEnumerable. 
+            If items is empty, default value of <typeparamref name="T"/> will be returned.
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="items"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdeaFactory.Util.CollectionUtil.GetLast``1(System.Collections.Generic.IEnumerable{``0})">
+            <summary>
+            Get the last item in the IEnumerable.
+            If items is empty, default value of <typeparamref name="T"/> will be returned.
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="items"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdeaFactory.Util.CollectionUtil.FindFirst``1(System.Collections.Generic.IEnumerable{``0},System.Predicate{``0})">
+            <summary>
+            Find the first item in the IEnumerable based on a predicate delegate
+            If items is empty or null, default value of <typeparamref name="T"/> will be returned.
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="items"></param>
+            <param name="predict"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdeaFactory.Util.CollectionUtil.Count``1(System.Collections.Generic.IEnumerable{``0})">
+            <summary>
+            Count the number of items in a IEnumerable in a most efficient way. 
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="items"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdeaFactory.Util.CollectionUtil.CountIf``1(System.Collections.Generic.IEnumerable{``0},System.Predicate{``0})">
+            <summary>
+            Count the number of items that matches the predict
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="items"></param>
+            <param name="predict"></param>
+            <returns></returns>
+        </member>
+        <member name="M:IdeaFactory.Util.CollectionUtil.AddItemToCollectionDictionary``2(System.Collections.Generic.Dictionary{``0,System.Collections.Generic.List{``1}},``0,``1)">
+            <summary>
+            Add an item to a dictionary whose value is a collection of items
+            </summary>
+            <returns>True if new dictionary entry is created</returns>
+        </member>
+        <member name="M:IdeaFactory.Util.CollectionUtil.Compare``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IEnumerable{``0},IdeaFactory.Util.IMatcher{``0,``0})">
+            <summary>
+            This is suitable for custom equity comparison. For default reference compare, it's recommended to use a HashSet based solution for better performance
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.CollectionUtil.ArrayClone``1(``0[])">
+            <summary>
+            To create a shallow clone
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.CollectionUtil.FindFirsts``2(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.IEnumerable{``1},IdeaFactory.Util.IMatcher{``0,``1})">
+            <summary>
+            <para>Find the first items in the IEnumerable that matches the identities based on a matching delegate. </para>
+            <para>Items must be enumerate repeatable. i.e. producing the same result for every enumeration. </para>
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.CollectionUtil.ShuffleAndFill``1(``0[],System.Int32)">
+            <summary>
+            Use a poll of values to generate and populate a new array of random values
+            </summary>
+            <param name="values">source values. The array will be shuffled. Clone it if you want to preserve the original order</param>
+            <param name="count">number of random values in the new array</param>
+            <returns>a new array with random values from the source array</returns>
+            <remarks>
+            If source values are unique, this method generates random values in a evenly distributed fashion, 
+            because it shuffles the source array, copy the array, and shuffles again...until count is reached.
+            </remarks>
+        </member>
+        <member name="M:IdeaFactory.Util.Security.Signer.Sign(System.String,System.String)">
+            <summary>
+            Sign the content with a key using HMACSHA1 algorithm
+            </summary>
+            <param name="key"></param>
+            <param name="content"></param>
+            <returns></returns>
+        </member>
+        <member name="T:IdeaFactory.Util.CalendarConstants">
+            <summary>
+            Contains frequent used calendar numbers
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.CalendarConstants.Fixed">
+            <summary>
+            Fixed numbers, always true, universally.
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.CalendarConstants.Average">
+            <summary>
+            Average numbers, as precise as possible, but not intended for scentific use. 
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.Enforce">
+            <summary>
+            <para>A simple implementation of COP (Contract Oriented Programming)</para>
+            <para>Note that exception will throw in both DEBUG and Release mode. </para>
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.Delayer">
+            <summary>
+            <para>Cause a region of code to be run for at least a certain period of time. </para>
+            <para>Wrap the too-fast-running codes in a using block of Delayer. 
+            Then when the Delayer is disposed it will cause the thread to sleep for the rest of specified duration. </para>
+            <para>However if the code is running longer than the specified duration, thread will not sleep. </para>
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.DateTimeRangeComparer.GenerateHashCode(IdeaFactory.Util.DateTimeRange)">
+            <remarks>
+            May not be distributive enough, need to test with actual data
+            </remarks>
+        </member>
+        <member name="T:IdeaFactory.Util.ObjectUtil">
+            <summary>
+            Helper methods for general object handling
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.ObjectUtil.TestNullForEqual``1(``0,``0)">
+            <summary>
+            <para>Use this to test nullness of two reference objects. </para>
+            <para>Return true if both are null</para>
+            <para>Return false if only one is null</para>
+            <para>Return null if both are not null</para>
+            <para>This method is best used in a ?? statement</para>
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.ObjectUtil.IsNullOrEmpty(System.Object)">
+            <summary>
+            Check if an object is null or its ToString() is empty string
+            </summary>
+            <param name="obj"></param>
+            <returns></returns>
+        </member>
+        <member name="T:IdeaFactory.Util.HashCodeQualityChecker">
+            <summary>
+            Use this utility to check the quality of hashcode, i.e. the number of duplicate hash codes. 
+            Duplicate hash codes will slow down hash table performance. 
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.HashCodeQualityChecker.#ctor(System.Boolean)">
+            <param name="maskHashCode">decide whether the hash code will be masked before analyse.
+            Since the built-in Dictionary will mask hash code, it is recommended to select true. </param>
+        </member>
+        <member name="T:IdeaFactory.Util.DataEventArgs`1">
+            <summary>
+            A generic EventArgs associated with a type. 
+            This can save you from creating lots of custom EventArgs.
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.CompositeKeyComparer">
+            <summary>
+            Use this in dictionary to avoid calling object.Equals which involves boxing/unboxing
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.CompositeKeyComparer.GenerateHashCode(IdeaFactory.Util.CompositeKey)">
+            <remarks>
+            Check test cases for distribution
+            </remarks>
+        </member>
+        <member name="T:IdeaFactory.Util.IActioner`1">
+            <summary>
+            This is the interface version for Action delegate
+            </summary>
+        </member>
+        <member name="T:IdeaFactory.Util.Security.HashMaker">
+            <summary>
+            Hash a string using the provided algorithm
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.Security.HashMaker.Hash(System.String)">
+            <summary>
+            Generate the hash
+            </summary>
+        </member>
+        <member name="M:IdeaFactory.Util.Security.HashMaker.Verify(System.String,System.String)">
+            <summary>
+            Verify the hashed and the original. True if matched. 
+            </summary>
+        </member>
+        <member name="P:IdeaFactory.Util.Security.HashMaker.SaltSize">
+            <summary>
+            Change the salt size to add additional security. Typically 4 to 8 inclusive.
+            </summary>
+        </member>
+    </members>
+</doc>

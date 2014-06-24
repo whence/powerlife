@@ -1,0 +1,16 @@
+Cards Not Implemented and the Reasons
+
+Alchemy: All cards requiring potions and Potion itself
+- They are anti-synergy with other cards (i.e. recommended to have 3-5 cards in a supply)
+- The additional potion cost complicate the game in many aspects, not just for buys
+
+Alchemy: Herbalist
+- Need ordering of cleanup discarding
+- Alternating other cards halfway through their movement
+
+Promo: Stash
+- Cumbersome interface
+
+Promo: Black Market
+- Need buying during Action
+- Need all cards and their corresponding setup to be prepared

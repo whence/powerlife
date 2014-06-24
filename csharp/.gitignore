@@ -1,0 +1,7 @@
+*.suo
+obj/
+bin/
+_ReSharper.Powercards/
+csproj.ReSharper/
+packages/*
+!packages/repositories.config

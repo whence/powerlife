@@ -1,0 +1,261 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{32E4ACC5-DE2C-4048-8AEC-3217B28DD609}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Powercards.Core</RootNamespace>
+    <AssemblyName>Powercards.Core</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="IdeaFactory.Util">
+      <HintPath>..\lib\IdeaFactory.Util.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CardCreator.cs" />
+    <Compile Include="CardInfoAttribute.cs" />
+    <Compile Include="CardMovementVerb.cs" />
+    <Compile Include="CardSet.cs" />
+    <Compile Include="Cards\Adventurer.cs" />
+    <Compile Include="Cards\Ambassador.cs" />
+    <Compile Include="Cards\Apprentice.cs" />
+    <Compile Include="Cards\BagOfGold.cs" />
+    <Compile Include="Cards\Bank.cs" />
+    <Compile Include="Cards\Baron.cs" />
+    <Compile Include="Cards\Bazaar.cs" />
+    <Compile Include="Cards\Bishop.cs" />
+    <Compile Include="Cards\Bridge.cs" />
+    <Compile Include="Cards\Bureaucrat.cs" />
+    <Compile Include="Cards\Caravan.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Cards\Cellar.cs" />
+    <Compile Include="Cards\Chancellor.cs" />
+    <Compile Include="Cards\Chapel.cs" />
+    <Compile Include="Cards\City.cs" />
+    <Compile Include="Cards\Colony.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Cards\Conspirator.cs" />
+    <Compile Include="Cards\Contraband.cs" />
+    <Compile Include="Cards\Copper.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Cards\Coppersmith.cs" />
+    <Compile Include="Cards\CouncilRoom.cs" />
+    <Compile Include="Cards\CountingHouse.cs" />
+    <Compile Include="Cards\Courtyard.cs" />
+    <Compile Include="Cards\Curse.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Cards\Cutpurse.cs" />
+    <Compile Include="Cards\Diadem.cs" />
+    <Compile Include="Cards\Duchy.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Cards\Duke.cs" />
+    <Compile Include="Cards\Embargo.cs" />
+    <Compile Include="Cards\Envoy.cs" />
+    <Compile Include="Cards\Estate.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Cards\Expand.cs" />
+    <Compile Include="Cards\Explorer.cs" />
+    <Compile Include="Cards\Fairgrounds.cs" />
+    <Compile Include="Cards\FarmingVillage.cs" />
+    <Compile Include="Cards\Feast.cs" />
+    <Compile Include="Cards\Festival.cs" />
+    <Compile Include="Cards\FishingVillage.cs" />
+    <Compile Include="Cards\Followers.cs" />
+    <Compile Include="Cards\Forge.cs" />
+    <Compile Include="Cards\FortuneTeller.cs" />
+    <Compile Include="Cards\Gardens.cs" />
+    <Compile Include="Cards\GhostShip.cs" />
+    <Compile Include="Cards\Gold.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Cards\Goons.cs" />
+    <Compile Include="Cards\GrandMarket.cs" />
+    <Compile Include="Cards\GreatHall.cs" />
+    <Compile Include="Cards\Hamlet.cs" />
+    <Compile Include="Cards\Harem.cs" />
+    <Compile Include="Cards\Harvest.cs" />
+    <Compile Include="Cards\Haven.cs" />
+    <Compile Include="Cards\Hoard.cs" />
+    <Compile Include="Cards\HornOfPlenty.cs" />
+    <Compile Include="Cards\HorseTraders.cs" />
+    <Compile Include="Cards\HuntingParty.cs" />
+    <Compile Include="Cards\Ironworks.cs" />
+    <Compile Include="Cards\Island.cs" />
+    <Compile Include="Cards\Jester.cs" />
+    <Compile Include="Cards\KingsCourt.cs" />
+    <Compile Include="Cards\Laboratory.cs" />
+    <Compile Include="Cards\Library.cs" />
+    <Compile Include="Cards\Lighthouse.cs" />
+    <Compile Include="Cards\Loan.cs" />
+    <Compile Include="Cards\Lookout.cs" />
+    <Compile Include="Cards\Market.cs" />
+    <Compile Include="Cards\Masquerade.cs" />
+    <Compile Include="Cards\Menagerie.cs" />
+    <Compile Include="Cards\MerchantShip.cs" />
+    <Compile Include="Cards\Militia.cs" />
+    <Compile Include="Cards\Mine.cs" />
+    <Compile Include="Cards\MiningVillage.cs" />
+    <Compile Include="Cards\Minion.cs" />
+    <Compile Include="Cards\Mint.cs" />
+    <Compile Include="Cards\Moat.cs" />
+    <Compile Include="Cards\Moneylender.cs" />
+    <Compile Include="Cards\Monument.cs" />
+    <Compile Include="Cards\Mountebank.cs" />
+    <Compile Include="Cards\NativeVillage.cs" />
+    <Compile Include="Cards\Navigator.cs" />
+    <Compile Include="Cards\Nobles.cs" />
+    <Compile Include="Cards\Outpost.cs" />
+    <Compile Include="Cards\Pawn.cs" />
+    <Compile Include="Cards\PearlDiver.cs" />
+    <Compile Include="Cards\Peddler.cs" />
+    <Compile Include="Cards\PirateShip.cs" />
+    <Compile Include="Cards\Platinum.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Cards\Princess.cs" />
+    <Compile Include="Cards\Province.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Cards\Quarry.cs" />
+    <Compile Include="Cards\Rabble.cs" />
+    <Compile Include="Cards\Remake.cs" />
+    <Compile Include="Cards\Remodel.cs" />
+    <Compile Include="Cards\RoyalSeal.cs" />
+    <Compile Include="Cards\Saboteur.cs" />
+    <Compile Include="Cards\Salvager.cs" />
+    <Compile Include="Cards\Scout.cs" />
+    <Compile Include="Cards\SeaHag.cs" />
+    <Compile Include="Cards\SecretChamber.cs" />
+    <Compile Include="Cards\ShantyTown.cs" />
+    <Compile Include="Cards\Silver.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Cards\Smithy.cs" />
+    <Compile Include="Cards\Smugglers.cs" />
+    <Compile Include="Cards\Spy.cs" />
+    <Compile Include="Cards\Steward.cs" />
+    <Compile Include="Cards\Swindler.cs" />
+    <Compile Include="Cards\Tactician.cs" />
+    <Compile Include="Cards\Talisman.cs" />
+    <Compile Include="Cards\Thief.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Cards\ThroneRoom.cs" />
+    <Compile Include="Cards\Torturer.cs" />
+    <Compile Include="Cards\Tournament.cs" />
+    <Compile Include="Cards\TradeRoute.cs" />
+    <Compile Include="Cards\TradingPost.cs" />
+    <Compile Include="Cards\TreasureMap.cs" />
+    <Compile Include="Cards\Treasury.cs" />
+    <Compile Include="Cards\Tribute.cs" />
+    <Compile Include="Cards\TrustySteed.cs" />
+    <Compile Include="Cards\Upgrade.cs" />
+    <Compile Include="Cards\Vault.cs" />
+    <Compile Include="Cards\Venture.cs" />
+    <Compile Include="Cards\Village.cs" />
+    <Compile Include="Cards\WalledVillage.cs" />
+    <Compile Include="Cards\Warehouse.cs" />
+    <Compile Include="Cards\Watchtower.cs" />
+    <Compile Include="Cards\Wharf.cs" />
+    <Compile Include="Cards\WishingWell.cs" />
+    <Compile Include="Cards\Witch.cs" />
+    <Compile Include="Cards\Woodcutter.cs" />
+    <Compile Include="Cards\WorkersVillage.cs" />
+    <Compile Include="Cards\Workshop.cs" />
+    <Compile Include="Cards\YoungWitch.cs" />
+    <Compile Include="CardTypes\IInPlayCostModifierCard.cs" />
+    <Compile Include="CardTypes\IDiscardSelfZoneAlternationCard.cs" />
+    <Compile Include="CardTypes\IGainZoneAlternationCard.cs" />
+    <Compile Include="CardTypes\IDefenceCard.cs" />
+    <Compile Include="CardTypes\IGameEndingCard.cs" />
+    <Compile Include="CardTypes\IPostBuyEventCard.cs" />
+    <Compile Include="CardTypes\IPreBuySelfEventCard.cs" />
+    <Compile Include="CardTypes\IPreCleanupSelfMovementCard.cs" />
+    <Compile Include="CardTypes\IScoringCard.cs" />
+    <Compile Include="CardZoneBase.cs" />
+    <Compile Include="Deck.cs" />
+    <Compile Include="Effects\AttachmentDurationEffect.cs" />
+    <Compile Include="Effects\IDurationEffect.cs" />
+    <Compile Include="INameIdentifiable.cs" />
+    <Compile Include="PlayerOwnedZone.cs" />
+    <Compile Include="PrizeZone.cs" />
+    <Compile Include="RandomCardSupplyCreator.cs" />
+    <Compile Include="SharedTransitionalZone.cs" />
+    <Compile Include="TextGameLog.cs" />
+    <Compile Include="Validators\CardZoneValidator.cs" />
+    <Compile Include="Validators\EnumerableValidator.cs" />
+    <Compile Include="Validators\CountValidator.cs" />
+    <Compile Include="Validators\NamesValidator.cs" />
+    <Compile Include="Validators\NameValidator.cs" />
+    <Compile Include="Validators\CardTypeValidator.cs" />
+    <Compile Include="Validators\InvertValidator.cs" />
+    <Compile Include="Validators\IValidator.cs" />
+    <Compile Include="IGameDialog.cs" />
+    <Compile Include="CardSupplyCreator.cs" />
+    <Compile Include="ICard.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="CardBase.cs" />
+    <Compile Include="CardSupply.cs" />
+    <Compile Include="CardSupplyPile.cs" />
+    <Compile Include="CardTypes\IActionCard.cs" />
+    <Compile Include="CardTypes\ITreasureCard.cs" />
+    <Compile Include="CardTypes\IVictoryCard.cs" />
+    <Compile Include="ICardZone.cs" />
+    <Compile Include="Validators\NonEmptyPileValidator.cs" />
+    <Compile Include="Validators\CardCostValidator.cs" />
+    <Compile Include="Validators\CompositeValidatorBase.cs" />
+    <Compile Include="Validators\NullValidator.cs" />
+    <Compile Include="Utils\Toolbox.cs" />
+    <Compile Include="Utils\GenericEnumerable.cs" />
+    <Compile Include="Utils\LoopEnumerator.cs" />
+    <Compile Include="Effects\TurnEffect.cs" />
+    <Compile Include="Game.cs" />
+    <Compile Include="Effects\SimpleDurationEffect.cs" />
+    <Compile Include="IGameLog.cs" />
+    <Compile Include="Player.cs" />
+    <Compile Include="TransitionalZone.cs" />
+    <Compile Include="TrashZone.cs" />
+    <Compile Include="TurnContext.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

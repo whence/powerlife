@@ -1,0 +1,62 @@
+bonjour
+- use ASCII on iOS
+- is buffer usd in fast/slow coordination? what about send
+- where to set breakpoint? before endxxx or after
+- hash and size check message first thing
+- server can pick up right messages among bad ones? i.e. skip until found
+- message sending order matters?
+- is .net implementation auto separate streaming bytes? or is because udp is always in a datagram packet?
+- subscribe to updates http://code.google.com/p/cocoaasyncsocket/
+- will .net BeginReceive receive pending data sent before?
+- try to separate networking out of ui thread and game thread, so can be restarted independely
+- ipv6 ready?
+- use reachability api on ios to detect disconnection? no need for server as bonjour browser does the job
+- need to change runloop mode? for both NSNetService and Socket
+- Multitasking (check Bonjour wwdc video last section)
+- If not using AsyncSocket, checkout bonjour wwdc video as he mentioned a sample for CFNetwork coding is coming out
+- if stopped browsing, can still detect find/remove?
+- ensure string transferred exactly as is
+- need to handle unreliability of UDP? retry, etc
+- message size: if oversized, truncate old bit of undetermined info (such as hand) to produce a size-predicatable snapshot, and use enforce on the producer side
+- ui tips on mj
+- use native interop lib (because 64bit and different version)
+- what is bonjour p2p
+
+console:
+- check manual for all cards
+- refactor gamelog
+- use gameSnapshot instead of context/player in dialog
+
+rx
+- use rx ObserveOn instead of SlimReadWriteLock
+- thread safety (e.g. subject)
+- ensure dev and hosting machines all have the same latest version
+- take(1) needed?
+
+hosting:
+- check mem consumption after long running
+- gameHost: thread safety
+
+alchemy (if needed)
+- checkout cardcost.cs in paulbatum
+
+mvc + server-sent event (if needed)
+
+websync (if needed)
+- Synchronous 
+- cross-domain
+- test message size limit, and put in enforce to future-proof
+- ensure not reaching connection limit
+- reconnect catchup required?
+
+web:
+- consider websync
+- this.Response.Cache.SetCacheability(HttpCacheability.NoCache); needed?
+- perf: web.config system.webServer
+- IIS: http://go.microsoft.com/?LinkId=9394801
+- may need to distinguish card position when playcard and selectcards. currently only identified by cardname
+
+misc:
+- improve shuffling
+- should change singleton into more specific null object?
+- determinism: http://gamesfromwithin.com/casey-and-the-clearly-deterministic-contraptions

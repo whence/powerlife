@@ -1,0 +1,30 @@
+LineLength:
+  Max: 160
+
+Documentation:
+  Enabled: false
+
+MethodLength:
+  Max: 1000
+
+CyclomaticComplexity:
+  Max: 1000
+
+ClassLength:
+  Max: 10000
+
+ParameterLists:
+  Max: 5
+  CountKeywordArgs: false
+
+BlockNesting:
+  Max: 10
+
+FileName:
+  Enabled: false
+
+Next:
+  Enabled: false
+
+GuardClause:
+  Enabled: false
