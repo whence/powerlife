@@ -1,35 +1,39 @@
-import core._
+package core
 
 object Program {
-  def main(args: Array[String]) {
-    val playerNames = Vector("wes", "bec")
-    val game = Game(playerNames.length)
-  }
-}
 
-class ConsoleChannel extends Channel {
-  var subscribers = Vector.empty[String => (String, Boolean)]
-
-  def subscribeInput(subscriber: String => (String, Boolean)) {
-    subscribers :+= subscriber
-  }
-
-  @annotation.tailrec
-  final def readInput() {
-    if (!subscribers.isEmpty) {
-      readLine() match {
-        case "exit" =>
-          println("terminated as requested")
-        case line =>
-          subscribers = subscribers filter { subscriber =>
-            val output = subscriber(line)
-            print(output._1)
-            output._2
-          }
-          readInput()
+  def main(args: Array[String]): Unit = {
+    import Powercards._
+    import collection.immutable.Queue
+    
+    @annotation.tailrec
+    def inputloop(game: Game, userInputs: Queue[Vector[Int]]) {
+      game.progress(userInputs) match {
+        case (dialog, context) =>
+          println(dialog.player.name + ": " + dialog.message)
+          println(dialog.choices.mkString(", "))
+          println(game.activePlayer)
+          println("trash %s".format(game.trash))
+          val userInput = readInput()
+          inputloop(context.checkpoint, context.processedUserInputs.enqueue(userInput))
       }
-    } else {
-      println("terminated as all subscribers left")
     }
+    
+    def readInput(): Vector[Int] = {
+      toVector(readLine().split(',').map(x => parseInt(x.trim)).collect({ case Some(index) => index }).toList)
+    }
+    
+    def toVector[A](xs: List[A]): Vector[A] = {
+      import collection.breakOut
+      xs.map(identity)(breakOut)
+    }
+    
+    def parseInt(s: String) = try { Some(s.toInt) } catch { case _ => None }
+    
+    inputloop({
+      val game = Game.create(Vector("wes", "bec"))
+      game.activePlayer.hand ++= Vector(new Remodel, new ThroneRoom, new ThroneRoom)
+      game
+    }, Queue.empty)
   }
 }
