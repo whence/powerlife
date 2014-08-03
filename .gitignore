@@ -1,0 +1,8 @@
+# exclude emacs temp files
+*~
+[#]*[#]
+.\#*
+
+# exclude Mac OS X built-in directories
+.DS_Store
+Thumbs.db
