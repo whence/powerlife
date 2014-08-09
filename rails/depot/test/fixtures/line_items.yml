@@ -3,7 +3,9 @@
 one:
   product_id: 
   cart_id: 
+  price: 
 
 two:
   product_id: 
   cart_id: 
+  price: 
