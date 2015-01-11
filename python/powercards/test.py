@@ -1,10 +1,9 @@
 import unittest
-import app
-from cardlib import Copper, Estate, Remodel, Card, ActionCard, TreasureCard, VictoryCard
+import gameplay
 
 class GameSetupTests(unittest.TestCase):
     def test_game_setup(self):
-        game = app.Game(['wes', 'bec'])
+        game = gameplay.Game(['wes', 'bec'])
         self.assertEqual(len(game.players), 2)
         self.assertEqual(sorted([player.name for player in game.players]), ['bec', 'wes'])
 
@@ -16,9 +15,9 @@ class GameSetupTests(unittest.TestCase):
             self.assertEqual(len(player.discard), 0)
 
             fulldeck = player.deck + player.hand
-            self.assertEqual(sum(1 for c in fulldeck if isinstance(c, Estate)), 3)
-            self.assertEqual(sum(1 for c in fulldeck if isinstance(c, Copper)), 7)
-            self.assertFalse(any(isinstance(c, ActionCard) for c in player.hand))
+            self.assertEqual(sum(1 for c in fulldeck if isinstance(c, gameplay.Estate)), 3)
+            self.assertEqual(sum(1 for c in fulldeck if isinstance(c, gameplay.Copper)), 7)
+            self.assertFalse(any(isinstance(c, gameplay.ActionCard) for c in player.hand))
 
             if player == active_player:
                 self.assertEqual((player.actions, player.buys, player.coins), (1, 0, 0))
@@ -28,20 +27,16 @@ class GameSetupTests(unittest.TestCase):
         self.assertEqual(len(game.board.trash), 0)
         self.assertEqual(game.stage, 'action')
 
-class CardlibTests(unittest.TestCase):
+class CardTests(unittest.TestCase):
     def test_card_type(self):
-        self.assertIsInstance(Copper(), TreasureCard)
-        self.assertIsInstance(Estate(), VictoryCard)
-        self.assertIsInstance(Remodel(), ActionCard)
-
-    def test_all_inherif_from_card(self):
-        for card in [Copper(), Estate(), Remodel()]:
-            self.assertIsInstance(card, Card)
+        self.assertIsInstance(gameplay.Copper(), gameplay.TreasureCard)
+        self.assertIsInstance(gameplay.Estate(), gameplay.VictoryCard)
+        self.assertIsInstance(gameplay.Remodel(), gameplay.ActionCard)
 
 class GamePlayTests(unittest.TestCase):
     def test_skip_to_treasure(self):
-        game = app.Game(['wes', 'bec'])
-        app.play(game)
+        game = gameplay.Game(['wes', 'bec'])
+        gameplay.play(game)
         self.assertEqual(game.stage, 'treasure')
 
 if __name__ == '__main__':
