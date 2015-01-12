@@ -6,3 +6,6 @@ def one(message, items):
 
 def unlimited(message, items):
     pass
+
+def out(message):
+    print(message)

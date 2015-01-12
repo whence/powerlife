@@ -15,9 +15,6 @@ class Game(object):
     def active_player(self):
         return self.players[self.active_index]
 
-    def out(self, message):
-        print(message)
-
 class Player(object):
     def __init__(self, name):
         self.name = name
@@ -83,33 +80,33 @@ def gain_one(pile, dst):
 
 def play_action(game):
     if game.active_player().actions == 0:
-        game.out('no more actions, skip to treasure stage')
+        dialog.out('no more actions, skip to treasure stage')
         game.stage = 'treasure'
     else:
         chosen = dialog.optional_one(
             message='select an action card to play',
             items=[(card.name, isinstance(card, ActionCard)) for card in game.active_player().hand])
         if chosen is None:
-            game.out('skip to treasure stage')
+            dialog.out('skip to treasure stage')
             game.stage = 'treasure'
         else:
-            game.out('you have chosen {0}'.format(chosen))
+            dialog.out('you have chosen {0}'.format(chosen))
 
 def play_treasure(game):
     chosen = dialog.unlimited(
         message='select treasure cards to play',
         items=[(card.name, isinstance(card, TreasureCard)) for card in game.active_player().hand])
     if chosen is None:
-        game.out('skip to buy stage')
+        dialog.out('skip to buy stage')
         game.stage = 'buy'
     else:
-        game.out('you have chosen {0}'.format(chosen))
+        dialog.out('you have chosen {0}'.format(chosen))
 
 def play_buy(game):
-    game.out('buy stage not implemented')
+    pass
 
 def play_cleanup(game):
-    game.out('cleanup stage not implemented')
+    pass
 
 def play(game):
     if game.stage == 'action':
@@ -148,17 +145,17 @@ class Remodel(ActionCard):
             message='select a card to remodel',
             items=[(card.name, True) for card in game.active.hand])
         if trash_i is None:
-            game.out('no card in hand to remodel')
+            dialog.out('no card in hand to remodel')
         else:
             trashed_card = trash_one(game.active_player().hand, trasn_i, game)
-            game.out('trashed {}'.format(trashed_card.name))
+            dialog.out('trashed {}'.format(trashed_card.name))
 
             gain_i = dialog.one(
                 message='select a pile to gain',
                 items=[(pile.name, not pile.empty and pile.sample.costs <= trashed_card.costs + 2) for pile in game.board.piles])
             if gain_i is None:
-                game.out('no pile available to gain')
+                dialog.out('no pile available to gain')
             else:
                 gained_card = gain_one(game.board.piles[gain_i], game.active_player().discard)
-                game.out('gained {}'.format(gained_card.name))
+                dialog.out('gained {}'.format(gained_card.name))
 
