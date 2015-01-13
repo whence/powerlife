@@ -51,24 +51,24 @@ class Game(object):
             self.output('no more actions, skip to treasure stage')
             self.stage = 'treasure'
         else:
-            chosen = self.choose_optional_one(
+            action_i = self.choose_optional_one(
                 message='select an action card to play',
                 items=[(card.name, isinstance(card, cardlib.ActionCard)) for card in self.active_player().hand])
-            if chosen is None:
+            if action_i is None:
                 self.output('skip to treasure stage')
                 self.stage = 'treasure'
             else:
-                self.output('you have chosen {0}'.format(chosen))
+                self.output('you have chosen {0}'.format(action_i))
 
     def play_treasure(self):
-        chosen = self.choose_unlimited(
+        treasure_i = self.choose_unlimited(
             message='select treasure cards to play',
             items=[(card.name, isinstance(card, cardlib.TreasureCard)) for card in self.active_player().hand])
-        if chosen is None:
+        if treasure_i is None:
             self.output('skip to buy stage')
             self.stage = 'buy'
         else:
-            self.output('you have chosen {0}'.format(chosen))
+            self.output('you have chosen {0}'.format(treasure_i))
 
     def play_buy(self):
         pass
@@ -87,13 +87,56 @@ class Game(object):
             self.play_cleanup()
 
     def choose_optional_one(self, message, items):
-        pass
+        if any(selectable for _, selectable in items):
+            while True:
+                self.output(message)
+                self.output_items(items)
+                raw = self.input()
+                if raw == 'skip':
+                    return None
+                elif items[int(raw)][1]:
+                    return int(raw)
+                else:
+                    self.output('{} is not selectable'.format(items[int(raw)][0]))
+        else:
+            return None
 
     def choose_one(self, message, items):
-        pass
+        if any(selectable for _, selectable in items):
+            while True:
+                self.output(message)
+                self.output_items(items)
+                raw = self.input()
+                if items[int(raw)][1]:
+                    return int(raw)
+                else:
+                    self.output('{} is not selectable'.format(items[int(raw)][0]))
+        else:
+            return None
 
     def choose_unlimited(self, message, items):
-        pass
+        if any(selectable for _, selectable in items):
+            while True:
+                self.output(message)
+                self.output_items(items)
+                raw = self.input()
+                if raw == 'skip':
+                    return None
+                else:
+                    idx = [int(index) for index in raw.split(',') if index.strip()]
+                    if all(items[i][1] for i in idx):
+                        return idx
+                    else:
+                        self.output('some items are not selectable')
+        else:
+            return None
+
+    def output_items(self, items):
+        for i, (name, selectable) in enumerate(items):
+            self.output('[{}] {} {}'.format(i, name, '(select)' if selectable else ''))
 
     def output(self, message):
         print(message)
+
+    def input(self):
+        return raw_input('>')

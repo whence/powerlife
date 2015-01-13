@@ -27,7 +27,7 @@ class Remodel(ActionCard):
         if trash_i is None:
             game.output('no card in hand to remodel')
         else:
-            trashed_card = game.trash_one(game.active_player().hand, trasn_i, game)
+            trashed_card = game.trash_one(game.active_player().hand, trash_i, game)
             game.output('trashed {}'.format(trashed_card.name))
 
             gain_i = game.choose_one(
