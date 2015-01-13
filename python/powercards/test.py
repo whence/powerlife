@@ -1,9 +1,10 @@
 import unittest
-import gameplay
+import cardlib
+from game import Game
 
 class GameSetupTests(unittest.TestCase):
     def test_game_setup(self):
-        game = gameplay.Game(['wes', 'bec'])
+        game = Game(['wes', 'bec'])
         self.assertEqual(len(game.players), 2)
         self.assertEqual(sorted([player.name for player in game.players]), ['bec', 'wes'])
 
@@ -15,9 +16,9 @@ class GameSetupTests(unittest.TestCase):
             self.assertEqual(len(player.discard), 0)
 
             fulldeck = player.deck + player.hand
-            self.assertEqual(sum(1 for c in fulldeck if isinstance(c, gameplay.Estate)), 3)
-            self.assertEqual(sum(1 for c in fulldeck if isinstance(c, gameplay.Copper)), 7)
-            self.assertFalse(any(isinstance(c, gameplay.ActionCard) for c in player.hand))
+            self.assertEqual(sum(1 for c in fulldeck if isinstance(c, cardlib.Estate)), 3)
+            self.assertEqual(sum(1 for c in fulldeck if isinstance(c, cardlib.Copper)), 7)
+            self.assertFalse(any(isinstance(c, cardlib.ActionCard) for c in player.hand))
 
             if player == active_player:
                 self.assertEqual((player.actions, player.buys, player.coins), (1, 0, 0))
@@ -29,14 +30,14 @@ class GameSetupTests(unittest.TestCase):
 
 class CardTests(unittest.TestCase):
     def test_card_type(self):
-        self.assertIsInstance(gameplay.Copper(), gameplay.TreasureCard)
-        self.assertIsInstance(gameplay.Estate(), gameplay.VictoryCard)
-        self.assertIsInstance(gameplay.Remodel(), gameplay.ActionCard)
+        self.assertIsInstance(cardlib.Copper(), cardlib.TreasureCard)
+        self.assertIsInstance(cardlib.Estate(), cardlib.VictoryCard)
+        self.assertIsInstance(cardlib.Remodel(), cardlib.ActionCard)
 
-class GamePlayTests(unittest.TestCase):
+class GameTests(unittest.TestCase):
     def test_skip_to_treasure(self):
-        game = gameplay.Game(['wes', 'bec'])
-        gameplay.play(game)
+        game = Game(['wes', 'bec'])
+        game.play()
         self.assertEqual(game.stage, 'treasure')
 
 if __name__ == '__main__':
