@@ -1,6 +1,7 @@
 import unittest
 import cardlib
 from game import Game
+from mock import MagicMock
 
 class GameSetupTests(unittest.TestCase):
     def test_game_setup(self):
@@ -37,8 +38,11 @@ class CardTests(unittest.TestCase):
 class GameTests(unittest.TestCase):
     def test_skip_to_treasure(self):
         game = Game(['wes', 'bec'])
+        game.output = MagicMock()
         game.play()
         self.assertEqual(game.stage, 'treasure')
+        game.output.assert_any_call('skip to treasure stage')
+        self.assertEqual(game.output.call_count, 1)
 
 if __name__ == '__main__':
     unittest.main()
