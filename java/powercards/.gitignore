@@ -1,0 +1,21 @@
+# IDEA artifacts and output dirs
+*.iml
+*.ipr
+*.iws
+.idea
+out
+
+# Gradle and build ignores
+gradle-app.setting
+.gradle/
+build/
+
+# Temp dirs
+.tmp
+.tmp_*
+classes
+
+# Temp files
+target/
+*.log
+*.stackdump
