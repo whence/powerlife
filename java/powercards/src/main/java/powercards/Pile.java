@@ -1,4 +1,4 @@
 package powercards;
 
-public class Dialog {
+public class Pile {
 }
