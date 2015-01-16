@@ -18,14 +18,15 @@ public class GameTest {
   @Mock
   private Dialog dialog;
 
+  private Game game;
+
   @Before
   public void setUp() {
+    game = new Game(Arrays.asList("wes", "bec"), dialog);
   }
 
   @Test
-  public void shouldInitializeGame() throws IllegalAccessException, InstantiationException {
-    Game game = new Game(Arrays.asList("wes", "bec"), dialog);
-
+  public void shouldInitializeGame() {
     assertThat(game.getPlayers().size(), is(2));
     assertThat(game.getPlayers().stream().map(Player::getName).collect(Collectors.toList()),
         is(Arrays.asList("wes", "bec")));

@@ -1,8 +1,12 @@
 package powercards;
 
 public abstract class Card {
+  public String getName() {
+    return this.getClass().getSimpleName();
+  }
+
   @Override
   public String toString() {
-    return this.getClass().getSimpleName();
+    return this.getName();
   }
 }

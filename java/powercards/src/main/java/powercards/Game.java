@@ -19,7 +19,7 @@ public class Game {
     return players;
   }
 
-  public Game(List<String> playerNames, Dialog dialog) throws InstantiationException, IllegalAccessException {
+  public Game(List<String> playerNames, Dialog dialog) {
     if (playerNames.size() < 2 || playerNames.size() > 4) {
       throw new IllegalArgumentException("there should be only 2-4 players");
     }
@@ -27,7 +27,7 @@ public class Game {
     this.players = playerNames.stream().map(Player::new).collect(Collectors.toList());
 
     Random random = new Random();
-    this.activePlayerIndex = random.nextInt(this.players.size());
+    this.activePlayerIndex = random.nextInt(players.size());
     this.board = new Board(Arrays.asList(new Pile(Copper.class, 60), new Pile(Estate.class, 12)));
     this.dialog = dialog;
   }
