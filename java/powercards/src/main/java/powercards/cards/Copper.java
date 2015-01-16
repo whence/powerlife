@@ -1,4 +1,7 @@
 package powercards.cards;
 
-public class Copper {
+import powercards.Card;
+import powercards.TreasureCard;
+
+public class Copper extends Card implements TreasureCard {
 }

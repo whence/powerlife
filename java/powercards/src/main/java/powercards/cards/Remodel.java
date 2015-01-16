@@ -1,4 +1,7 @@
 package powercards.cards;
 
-public class Remodel {
+import powercards.ActionCard;
+import powercards.Card;
+
+public class Remodel extends Card implements ActionCard {
 }

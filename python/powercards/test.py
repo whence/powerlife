@@ -7,7 +7,7 @@ class GameSetupTests(unittest.TestCase):
     def test_game_setup(self):
         game = Game(['wes', 'bec'])
         self.assertEqual(len(game.players), 2)
-        self.assertEqual(sorted([player.name for player in game.players]), ['bec', 'wes'])
+        self.assertEqual([player.name for player in game.players], ['wes', 'bec'])
 
         active_player = game.active_player()
         for player in game.players:

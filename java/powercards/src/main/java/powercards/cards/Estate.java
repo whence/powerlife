@@ -1,4 +1,7 @@
 package powercards.cards;
 
-public class Estate {
+import powercards.Card;
+import powercards.VictoryCard;
+
+public class Estate extends Card implements VictoryCard {
 }

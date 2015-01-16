@@ -1,4 +1,4 @@
 package powercards;
 
-public interface TreasureCard {
+public interface TreasureCard  {
 }

@@ -23,7 +23,7 @@ public class GameTest {
   }
 
   @Test
-  public void shouldInitializeGame() {
+  public void shouldInitializeGame() throws IllegalAccessException, InstantiationException {
     Game game = new Game(Arrays.asList("wes", "bec"), dialog);
 
     assertThat(game.getPlayers().size(), is(2));
