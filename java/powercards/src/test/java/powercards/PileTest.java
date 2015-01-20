@@ -5,8 +5,6 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 import powercards.cards.Copper;
 
-import java.util.stream.IntStream;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
@@ -18,27 +16,27 @@ public class PileTest {
 
     assertThat(pile.isEmpty(), is(false));
 
-    IntStream.rangeClosed(1, 5).forEach(n -> {
+    for (int i = 1; i <= 5; i++) {
       pile.pop();
-      assertThat(pile.size(), is(8 - n));
-    });
+      assertThat(pile.size(), is(8 - i));
+    }
 
-    IntStream.rangeClosed(1, 3).forEach(n -> {
+    for (int i = 1; i <= 3; i++) {
       pile.push(new Copper());
-      assertThat(pile.size(), is(3 + n));
-    });
+      assertThat(pile.size(), is(3 + i));
+    }
 
-    IntStream.rangeClosed(1, 6).forEach(n -> {
+    for (int i = 1; i <= 6; i++) {
       pile.pop();
-      assertThat(pile.size(), is(6 - n));
-    });
+      assertThat(pile.size(), is(6 - i));
+    }
 
     assertThat(pile.isEmpty(), is(true));
 
-    IntStream.rangeClosed(1, 2).forEach(n -> {
+    for (int i = 1; i <= 2; i++) {
       pile.push(new Copper());
-      assertThat(pile.size(), is(n));
-    });
+      assertThat(pile.size(), is(i));
+    }
 
     assertThat(pile.isEmpty(), is(false));
   }
