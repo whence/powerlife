@@ -13,6 +13,10 @@ public class Dialog {
   }
 
   public OptionalInt chooseOne(String message, List<Choice> choices) {
+    if (choices.stream().anyMatch(Choice::isSelectable)) {
+
+    }
+
     return OptionalInt.empty();
   }
 

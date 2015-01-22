@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.OptionalInt;
 
@@ -35,19 +36,23 @@ public class DialogTest {
     OptionalInt e = OptionalInt.of(0);
     assertThat(c, is(d));
     assertThat(d, is(c));
-    assertThat(e, is(not(c)));
+    assertThat(e, not(c));
   }
 
   @Test
   public void shouldChooseOne() {
     when(inputOutput.input()).thenReturn("2");
-    OptionalInt choice = dialog.chooseOne("blah", Arrays.asList(
-        new Choice("0", false), new Choice("1", true), new Choice("2", true)));
-    assertThat(choice, is(OptionalInt.of(2)));
+    assertThat(dialog.chooseOne("blah", Arrays.asList(
+      new Choice("0", false), new Choice("1", true), new Choice("2", true))
+    ), is(OptionalInt.of(2)));
   }
 
   @Test
-  public void chooseOneShouldReturnEmptyWhenUnableToChoose() {
+  public void shouldReturnEmptyWhenUnableToChoose() {
+    assertThat(dialog.chooseOne("", new ArrayList<>()), is(OptionalInt.empty()));
+    assertThat(dialog.chooseOne("blah", Arrays.asList(
+      new Choice("0", false), new Choice("1", false), new Choice("2", false))
+    ), is(OptionalInt.empty()));
 
   }
 }

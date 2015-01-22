@@ -33,8 +33,8 @@ public class CardsTest {
 
   @Test
   public void cardsShouldReferenceCompare() {
-    assertThat(card1, is(not(card3)));
-    assertThat(card2, is(not(card4)));
+    assertThat(card1, not(card3));
+    assertThat(card2, not(card4));
   }
 
   @Test
