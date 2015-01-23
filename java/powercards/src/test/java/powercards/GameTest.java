@@ -12,6 +12,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,5 +69,24 @@ public class GameTest {
     game.play();
     assertThat(game.getStage(), is(Stage.TREASURE));
     verify(inputOutput).output("Skip to treasure stage");
+  }
+
+  @Test
+  public void playTreasureCardsShouldIncreaseCoins() {
+    Game game = new Game(Arrays.asList("wes", "bec"), new Dialog(inputOutput), inputOutput);
+    game.setStage(Stage.TREASURE);
+    game.getActivePlayer().getHand().clear();
+    List<Card> hand = Arrays.asList(new Copper(), new Estate(), new Copper(), new Estate(), new Copper());
+    game.getActivePlayer().getHand().addAll(hand);
+    when(inputOutput.input()).thenReturn("0, 2, 4");
+
+    assertThat(game.getActivePlayer().getCoins(), is(0));
+    assertThat(game.getActivePlayer().getPlayed().size(), is(0));
+
+    game.play();
+
+    assertThat(game.getActivePlayer().getCoins(), is(3));
+    assertThat(game.getActivePlayer().getPlayed(), is(Arrays.asList(hand.get(0), hand.get(2), hand.get(4))));
+    assertThat(game.getActivePlayer().getHand(), is(Arrays.asList(hand.get(1), hand.get(3))));
   }
 }

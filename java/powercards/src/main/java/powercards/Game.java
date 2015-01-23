@@ -45,6 +45,10 @@ public class Game {
     return stage;
   }
 
+  public void setStage(Stage stage) {
+    this.stage = stage;
+  }
+
   public Board getBoard() {
     return board;
   }
@@ -89,7 +93,11 @@ public class Game {
     Optional<int[]> idxTreasure = dialog.chooseUnlimited("Select treasure cards to play",
         Cards.toChoices(getActivePlayer().getHand(), c -> c instanceof TreasureCard));
     if (idxTreasure.isPresent()) {
-      // todo
+      List<Card> treasures = Cards.moveMany(getActivePlayer().getHand(), getActivePlayer().getPlayed(),
+          idxTreasure.get());
+      for (Card treasure : treasures) {
+        ((TreasureCard) treasure).play(this);
+      }
     } else {
       inputOutput.output("Skip to buy stage");
       stage = Stage.BUY;

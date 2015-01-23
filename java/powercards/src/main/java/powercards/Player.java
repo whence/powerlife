@@ -65,6 +65,10 @@ public class Player {
     this.coins = coins;
   }
 
+  public void addCoins(int coins) {
+    this.coins += coins;
+  }
+
   public List<Card> getDeck() {
     return deck;
   }
