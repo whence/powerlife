@@ -22,9 +22,6 @@ import java.util.stream.Collectors;
 public class GameTest {
 
   @Mock
-  private Dialog dialog;
-
-  @Mock
   private InputOutput inputOutput;
 
   @Before
@@ -33,7 +30,7 @@ public class GameTest {
 
   @Test
   public void shouldInitializeGame() {
-    Game game = new Game(Arrays.asList("wes", "bec"), dialog);
+    Game game = new Game(Arrays.asList("wes", "bec"), new Dialog(inputOutput), inputOutput);
 
     assertThat(game.getPlayers().size(), is(2));
     assertThat(game.getPlayers().stream().map(Player::getName).collect(Collectors.toList()),
@@ -67,7 +64,7 @@ public class GameTest {
 
   @Test
   public void firstPlayShouldSkipToTreasureStage() {
-    Game game = new Game(Arrays.asList("wes", "bec"), new Dialog(inputOutput));
+    Game game = new Game(Arrays.asList("wes", "bec"), new Dialog(inputOutput), inputOutput);
     game.play();
     assertThat(game.getStage(), is(Stage.TREASURE));
     verify(inputOutput).output("Skip to treasure stage");

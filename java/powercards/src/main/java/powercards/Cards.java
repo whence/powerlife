@@ -4,6 +4,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -48,5 +49,9 @@ public class Cards {
       ArrayUtils.reverse(array);
     }
     return array;
+  }
+
+  public static List<Choice> toChoices(List<Card> cards, Predicate<Card> predicate) {
+    return cards.stream().map(c -> new Choice(c.getName(), predicate.test(c))).collect(Collectors.toList());
   }
 }

@@ -133,4 +133,14 @@ public class CardsTest {
     assertThat(original, is(new int[] { 1, 2, 5, 3 }));
     assertThat(result == original, is(false));
   }
+
+  @Test
+  public void shouldConvertToChoices() {
+    List<Choice> choices = Cards.toChoices(Arrays.asList(new Copper(), new Estate()), c -> c instanceof VictoryCard);
+    assertThat(choices.size(), is(2));
+    assertThat(choices.get(0).getName(), is("Copper"));
+    assertThat(choices.get(0).isSelectable(), is(false));
+    assertThat(choices.get(1).getName(), is("Estate"));
+    assertThat(choices.get(1).isSelectable(), is(true));
+  }
 }
