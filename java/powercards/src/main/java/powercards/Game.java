@@ -1,10 +1,13 @@
 package powercards;
 
-import com.sun.tools.doclets.internal.toolkit.util.DocFinder;
 import powercards.cards.Copper;
 import powercards.cards.Estate;
 
 import java.util.*;
+import org.apache.commons.lang3.RandomUtils;
+
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class Game {
@@ -23,8 +26,7 @@ public class Game {
 
     this.players = playerNames.stream().map(Player::new).collect(Collectors.toList());
 
-    Random random = new Random();
-    this.activePlayerIndex = random.nextInt(players.size());
+    this.activePlayerIndex = RandomUtils.nextInt(0, players.size());
     this.stage = Stage.ACTION;
     this.board = new Board(Arrays.asList(new Pile(Copper.class, 60), new Pile(Estate.class, 12)));
     this.dialog = dialog;
@@ -79,7 +81,7 @@ public class Game {
       stage = Stage.TREASURE;
     } else {
       OptionalInt idxAction = dialog.chooseOptionalOne("Select an action card to play",
-          Cards.toChoices(getActivePlayer().getHand(), c -> c instanceof ActionCard));
+          Choices.of(getActivePlayer().getHand(), c -> c instanceof ActionCard));
       if (idxAction.isPresent()) {
         // todo
       } else {
@@ -91,7 +93,7 @@ public class Game {
 
   private void playTreasure() {
     Optional<int[]> idxTreasure = dialog.chooseUnlimited("Select treasure cards to play",
-        Cards.toChoices(getActivePlayer().getHand(), c -> c instanceof TreasureCard));
+        Choices.of(getActivePlayer().getHand(), c -> c instanceof TreasureCard));
     if (idxTreasure.isPresent()) {
       List<Card> treasures = Cards.moveMany(getActivePlayer().getHand(), getActivePlayer().getPlayed(),
           idxTreasure.get());

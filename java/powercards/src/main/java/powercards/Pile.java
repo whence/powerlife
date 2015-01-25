@@ -5,16 +5,16 @@ import java.util.Stack;
 public class Pile {
   private final Card sample;
   private int size;
-  private final Class<? extends Card> factory;
+  private final Class<? extends Card> clazz;
   private final Stack<Card> buffer;
 
   public Card getSample() {
     return sample;
   }
 
-  public Pile(Class<? extends Card> factory, int size) {
-    this.factory = factory;
-    this.sample = createCard(factory);
+  public Pile(Class<? extends Card> clazz, int size) {
+    this.clazz = clazz;
+    this.sample = Cards.newCard(clazz);
     this.size = size;
     this.buffer = new Stack<>();
   }
@@ -40,18 +40,9 @@ public class Pile {
     if (!buffer.isEmpty()) {
       card = buffer.pop();
     } else {
-      card = createCard(factory);
+      card = Cards.newCard(clazz);
     }
     size -= 1;
     return card;
-  }
-
-  private static Card createCard(Class<? extends Card> factory) {
-    try {
-      return factory.newInstance();
-    } catch (InstantiationException | IllegalAccessException e) {
-      throw new RuntimeException(String.format(
-          "Cannot create %s (possibly no default constructor?)", factory.getSimpleName()));
-    }
   }
 }

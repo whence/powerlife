@@ -135,12 +135,11 @@ public class CardsTest {
   }
 
   @Test
-  public void shouldConvertToChoices() {
-    List<Choice> choices = Cards.toChoices(Arrays.asList(new Copper(), new Estate()), c -> c instanceof VictoryCard);
-    assertThat(choices.size(), is(2));
-    assertThat(choices.get(0).getName(), is("Copper"));
-    assertThat(choices.get(0).isSelectable(), is(false));
-    assertThat(choices.get(1).getName(), is("Estate"));
-    assertThat(choices.get(1).isSelectable(), is(true));
+  public void shouldCreateNewCard() {
+    Card a = Cards.newCard(Copper.class);
+    Card b = Cards.newCard(Copper.class);
+    assertThat(a instanceof Copper, is(true));
+    assertThat(b instanceof Copper, is(true));
+    assertThat(a == b, is(false));
   }
 }
