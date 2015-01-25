@@ -9,4 +9,9 @@ public class Copper extends Card implements TreasureCard {
   public void play(Game game) {
     game.getActivePlayer().addCoins(1);
   }
+
+  @Override
+  public int getCost(Game game) {
+    return 1;
+  }
 }

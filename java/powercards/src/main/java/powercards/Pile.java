@@ -8,15 +8,15 @@ public class Pile {
   private final Class<? extends Card> clazz;
   private final Stack<Card> buffer;
 
-  public Card getSample() {
-    return sample;
-  }
-
   public Pile(Class<? extends Card> clazz, int size) {
     this.clazz = clazz;
-    this.sample = Cards.newCard(clazz);
+    this.sample = Cards.of(clazz);
     this.size = size;
     this.buffer = new Stack<>();
+  }
+
+  public Card getSample() {
+    return sample;
   }
 
   public boolean isEmpty() {
@@ -40,7 +40,7 @@ public class Pile {
     if (!buffer.isEmpty()) {
       card = buffer.pop();
     } else {
-      card = Cards.newCard(clazz);
+      card = Cards.of(clazz);
     }
     size -= 1;
     return card;

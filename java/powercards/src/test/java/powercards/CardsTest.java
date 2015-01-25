@@ -6,6 +6,7 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 import powercards.cards.Copper;
 import powercards.cards.Estate;
+import powercards.cards.ThroneRoom;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,6 +57,11 @@ public class CardsTest {
     assertThat(c.equals(d), is(true));
     assertThat(c, is(d));
     assertThat(d, is(c));
+
+    List<Card> e = new ArrayList<>();
+    e.add(card1);
+    e.add(card3);
+    assertThat(e, is(Arrays.asList(card1, card3)));
   }
 
   @Test
@@ -77,6 +83,18 @@ public class CardsTest {
     assertThat(source, is(Arrays.asList(card1, card3)));
     assertThat(target, is(Arrays.asList(card4, card2)));
     assertThat(card, is(card2));
+  }
+
+  @Test
+  public void shouldMoveOneFromPile() {
+    Pile pile = new Pile(Copper.class, 10);
+    List<Card> target = new ArrayList<>(Arrays.asList(card1, card2));
+
+    Card card = Cards.moveOne(pile, target);
+
+    assertThat(pile.size(), is(9));
+    assertThat(target.size(), is(3));
+    assertThat(target, is(Arrays.asList(card1, card2, card)));
   }
 
   @Test
@@ -136,10 +154,8 @@ public class CardsTest {
 
   @Test
   public void shouldCreateNewCard() {
-    Card a = Cards.newCard(Copper.class);
-    Card b = Cards.newCard(Copper.class);
-    assertThat(a instanceof Copper, is(true));
-    assertThat(b instanceof Copper, is(true));
+    Copper a = Cards.of(Copper.class);
+    Copper b = Cards.of(Copper.class);
     assertThat(a == b, is(false));
   }
 }

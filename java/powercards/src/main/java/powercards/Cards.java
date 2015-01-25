@@ -15,6 +15,12 @@ public class Cards {
     return card;
   }
 
+  public static Card moveOne(Pile pile, List<Card> target) {
+    Card card = pile.pop();
+    target.add(card);
+    return card;
+  }
+
   public static List<Card> moveMany(List<Card> source, List<Card> target, int[] sourceIndexes) {
     List<Card> cards = Arrays.stream(sourceIndexes).mapToObj(source::get).collect(Collectors.toList());
 
@@ -50,7 +56,7 @@ public class Cards {
     return array;
   }
 
-  public static Card newCard(Class<? extends Card> clazz) {
+  public static <T extends Card> T of(Class<T> clazz) {
     try {
       return clazz.newInstance();
     } catch (InstantiationException | IllegalAccessException e) {

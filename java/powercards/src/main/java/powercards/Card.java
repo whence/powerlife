@@ -9,4 +9,6 @@ public abstract class Card {
   public String toString() {
     return this.getName();
   }
+
+  public abstract int getCost(Game game);
 }

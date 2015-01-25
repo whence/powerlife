@@ -49,6 +49,10 @@ public class Player {
     this.actions = actions;
   }
 
+  public void addActions(int actions) {
+    this.actions += actions;
+  }
+
   public int getBuys() {
     return buys;
   }

@@ -55,6 +55,14 @@ public class Game {
     return board;
   }
 
+  public Dialog getDialog() {
+    return dialog;
+  }
+
+  public InputOutput getInputOutput() {
+    return inputOutput;
+  }
+
   public void play() {
     switch (stage) {
       case ACTION:
@@ -81,9 +89,13 @@ public class Game {
       stage = Stage.TREASURE;
     } else {
       OptionalInt idxAction = dialog.chooseOptionalOne("Select an action card to play",
-          Choices.of(getActivePlayer().getHand(), c -> c instanceof ActionCard));
+          Choices.ofCards(getActivePlayer().getHand(), c -> c instanceof ActionCard));
       if (idxAction.isPresent()) {
-        // todo
+        Card actionCard = Cards.moveOne(getActivePlayer().getHand(), getActivePlayer().getPlayed(),
+            idxAction.getAsInt());
+        getActivePlayer().addActions(-1);
+        inputOutput.output("Playing " + actionCard);
+        ((ActionCard) actionCard).play(this);
       } else {
         inputOutput.output("Skip to treasure stage");
         stage = Stage.TREASURE;
@@ -93,11 +105,11 @@ public class Game {
 
   private void playTreasure() {
     Optional<int[]> idxTreasure = dialog.chooseUnlimited("Select treasure cards to play",
-        Choices.of(getActivePlayer().getHand(), c -> c instanceof TreasureCard));
+        Choices.ofCards(getActivePlayer().getHand(), c -> c instanceof TreasureCard));
     if (idxTreasure.isPresent()) {
-      List<Card> treasures = Cards.moveMany(getActivePlayer().getHand(), getActivePlayer().getPlayed(),
+      List<Card> treasureCards = Cards.moveMany(getActivePlayer().getHand(), getActivePlayer().getPlayed(),
           idxTreasure.get());
-      for (Card treasure : treasures) {
+      for (Card treasure : treasureCards) {
         ((TreasureCard) treasure).play(this);
       }
     } else {
