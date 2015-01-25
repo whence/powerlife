@@ -6,7 +6,6 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 import powercards.cards.Copper;
 import powercards.cards.Estate;
-import powercards.cards.ThroneRoom;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +17,6 @@ import static org.hamcrest.core.IsNot.not;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardsTest {
-
   private Card card1;
   private Card card2;
   private Card card3;
@@ -36,41 +34,8 @@ public class CardsTest {
   public void cardsShouldReferenceCompare() {
     assertThat(card1, not(card3));
     assertThat(card2, not(card4));
-  }
-
-  @Test
-  public void arrayListShouldStructuralCompared() {
-    List<Card> a = new ArrayList<>();
-    List<Card> b = new ArrayList<>();
-    a.add(card1);
-    a.add(card2);
-    b.add(card1);
-    b.add(card2);
-    assertThat(a == b, is(false));
-    assertThat(a.equals(b), is(true));
-    assertThat(a, is(b));
-    assertThat(b, is(a));
-
-    List<Card> c = Arrays.asList(card3, card4);
-    List<Card> d = Arrays.asList(card3, card4);
-    assertThat(c == d, is(false));
-    assertThat(c.equals(d), is(true));
-    assertThat(c, is(d));
-    assertThat(d, is(c));
-
-    List<Card> e = new ArrayList<>();
-    e.add(card1);
-    e.add(card3);
-    assertThat(e, is(Arrays.asList(card1, card3)));
-  }
-
-  @Test
-  public void arrayShouldWorkWithIsOperator() {
-    int[] a = new int[] { 1, 2, 3 };
-    int[] b = new int[] { 1, 2, 3 };
-    assertThat(a == b, is(false));
-    assertThat(a, is(b));
-    assertThat(b, is(a));
+    assertThat(card1 == card3, is(false));
+    assertThat(card2 == card4, is(false));
   }
 
   @Test

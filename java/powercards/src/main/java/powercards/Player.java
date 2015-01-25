@@ -61,6 +61,10 @@ public class Player {
     this.buys = buys;
   }
 
+  public void addBuys(int buys) {
+    this.buys += buys;
+  }
+
   public int getCoins() {
     return coins;
   }

@@ -1,6 +1,7 @@
 package powercards;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class Dialog {
   private final InputOutput inputOutput;
@@ -54,10 +55,14 @@ public class Dialog {
       while (true) {
         inputOutput.output(message);
         outputChoices(choices);
-        inputOutput.output("or skip");
+        inputOutput.output("or all, or skip");
         String input = inputOutput.input();
         if ("skip".equals(input)) {
           return Optional.empty();
+        }
+
+        if ("all".equals(input)) {
+          return Optional.of(IntStream.range(0, choices.size()).filter(i -> choices.get(i).isSelectable()).toArray());
         }
 
         int[] indexes = Arrays.stream(input.split(","))

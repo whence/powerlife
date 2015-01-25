@@ -33,6 +33,7 @@ public class Game {
     this.inputOutput = inputOutput;
 
     getActivePlayer().setActions(1);
+    getActivePlayer().setBuys(1);
   }
 
   public List<Player> getPlayers() {
@@ -88,11 +89,11 @@ public class Game {
       inputOutput.output("No more actions, skip to treasure stage");
       stage = Stage.TREASURE;
     } else {
-      OptionalInt idxAction = dialog.chooseOptionalOne("Select an action card to play",
+      OptionalInt iAction = dialog.chooseOptionalOne("Select an action card to play",
           Choices.ofCards(getActivePlayer().getHand(), c -> c instanceof ActionCard));
-      if (idxAction.isPresent()) {
+      if (iAction.isPresent()) {
         Card actionCard = Cards.moveOne(getActivePlayer().getHand(), getActivePlayer().getPlayed(),
-            idxAction.getAsInt());
+            iAction.getAsInt());
         getActivePlayer().addActions(-1);
         inputOutput.output("Playing " + actionCard);
         ((ActionCard) actionCard).play(this);
@@ -104,11 +105,11 @@ public class Game {
   }
 
   private void playTreasure() {
-    Optional<int[]> idxTreasure = dialog.chooseUnlimited("Select treasure cards to play",
+    Optional<int[]> iTreasure = dialog.chooseUnlimited("Select treasure cards to play",
         Choices.ofCards(getActivePlayer().getHand(), c -> c instanceof TreasureCard));
-    if (idxTreasure.isPresent()) {
+    if (iTreasure.isPresent()) {
       List<Card> treasureCards = Cards.moveMany(getActivePlayer().getHand(), getActivePlayer().getPlayed(),
-          idxTreasure.get());
+          iTreasure.get());
       for (Card treasure : treasureCards) {
         ((TreasureCard) treasure).play(this);
       }
@@ -119,6 +120,23 @@ public class Game {
   }
 
   private void playBuy() {
+    if (getActivePlayer().getBuys() == 0) {
+      inputOutput.output("No more buys, skip to cleanup stage");
+      stage = Stage.CLEANUP;
+    } else {
+      OptionalInt iBuy = dialog.chooseOptionalOne("Select a pile to buy",
+          Choices.ofPiles(getBoard().getPiles(),
+              p -> !p.isEmpty() && p.getSample().getCost(this) <= getActivePlayer().getCoins()));
+      if (iBuy.isPresent()) {
+        Card boughtCard = Cards.moveOne(getBoard().getPiles().get(iBuy.getAsInt()), getActivePlayer().getDiscard());
+        inputOutput.output("Bought " + boughtCard);
+        getActivePlayer().addCoins(-boughtCard.getCost(this));
+        getActivePlayer().addBuys(-1);
+      } else {
+        inputOutput.output("Skip to cleanup stage");
+        stage = Stage.CLEANUP;
+      }
+    }
   }
 
   private void playCleanup() {

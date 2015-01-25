@@ -27,15 +27,6 @@ public class DialogTest {
   private Dialog dialog;
 
   @Test
-  public void optionalIntShouldWorkWithIsOperator() {
-    OptionalInt a = OptionalInt.of(1);
-    OptionalInt b = OptionalInt.of(1);
-    assertThat(a == b, is(false));
-    assertThat(a, is(b));
-    assertThat(b, is(a));
-  }
-
-  @Test
   public void shouldChooseOne() {
     when(inputOutput.input()).thenReturn("2");
     assertThat(dialog.chooseOne("blah", Arrays.asList(
@@ -75,6 +66,15 @@ public class DialogTest {
             new Choice("0", true), new Choice("1", true), new Choice("2", true)));
     assertThat(result.isPresent(), is(true));
     assertThat(result.get(), is(new int[] { 1, 2, 0 }));
+  }
+
+  @Test
+  public void shouldChooseUnlimitedWithAllString() {
+    when(inputOutput.input()).thenReturn("all");
+    Optional<int[]> result = dialog.chooseUnlimited("blah", Arrays.asList(
+        new Choice("0", true), new Choice("1", true), new Choice("2", true)));
+    assertThat(result.isPresent(), is(true));
+    assertThat(result.get(), is(new int[] { 0, 1, 2 }));
   }
 
   @Test

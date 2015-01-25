@@ -5,16 +5,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import powercards.cards.Copper;
-import powercards.cards.Estate;
-import powercards.cards.Remodel;
-import powercards.cards.ThroneRoom;
+import powercards.cards.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,10 +21,6 @@ public class GameTest {
 
   @Mock
   private InputOutput inputOutput;
-
-  @Before
-  public void setUp() {
-  }
 
   @Test
   public void shouldInitializeGame() {
@@ -54,10 +45,11 @@ public class GameTest {
 
       if (player == game.getActivePlayer()) {
         assertThat(player.getActions(), is(1));
+        assertThat(player.getBuys(), is(1));
       } else {
         assertThat(player.getActions(), is(0));
+        assertThat(player.getBuys(), is(0));
       }
-      assertThat(player.getBuys(), is(0));
       assertThat(player.getCoins(), is(0));
     }
 
@@ -69,27 +61,8 @@ public class GameTest {
   public void firstPlayShouldSkipToTreasureStage() {
     Game game = new Game(Arrays.asList("wes", "bec"), new Dialog(inputOutput), inputOutput);
     game.play();
-    assertThat(game.getStage(), is(Stage.TREASURE));
     verify(inputOutput).output("Skip to treasure stage");
-  }
-
-  @Test
-  public void shouldPlayTreasureCards() {
-    Game game = new Game(Arrays.asList("wes", "bec"), new Dialog(inputOutput), inputOutput);
-    game.setStage(Stage.TREASURE);
-    game.getActivePlayer().getHand().clear();
-    List<Card> hand = Arrays.asList(new Copper(), new Estate(), new Copper(), new Estate(), new Copper());
-    game.getActivePlayer().getHand().addAll(hand);
-    when(inputOutput.input()).thenReturn("0, 2, 4");
-
-    assertThat(game.getActivePlayer().getCoins(), is(0));
-    assertThat(game.getActivePlayer().getPlayed().size(), is(0));
-
-    game.play();
-
-    assertThat(game.getActivePlayer().getCoins(), is(3));
-    assertThat(game.getActivePlayer().getPlayed(), is(Arrays.asList(hand.get(0), hand.get(2), hand.get(4))));
-    assertThat(game.getActivePlayer().getHand(), is(Arrays.asList(hand.get(1), hand.get(3))));
+    verify(inputOutput, never()).input();
     assertThat(game.getStage(), is(Stage.TREASURE));
   }
 
@@ -114,6 +87,84 @@ public class GameTest {
     assertThat(game.getActivePlayer().getHand(), is(Arrays.asList(
         hand.get(0), hand.get(1), hand.get(3), hand.get(4))));
     assertThat(game.getStage(), is(Stage.ACTION));
+  }
+
+  @Test
+  public void shouldSkipToTreasureIfNoActions() {
+    Game game = new Game(Arrays.asList("wes", "bec"), new Dialog(inputOutput), inputOutput);
+    game.getActivePlayer().setActions(0);
+    assertThat(game.getStage(), is(Stage.ACTION));
+    game.play();
+    verify(inputOutput, never()).input();
+    assertThat(game.getStage(), is(Stage.TREASURE));
+  }
+
+  @Test
+  public void shouldPlayTreasureCards() {
+    Game game = new Game(Arrays.asList("wes", "bec"), new Dialog(inputOutput), inputOutput);
+    game.setStage(Stage.TREASURE);
+    game.getActivePlayer().getHand().clear();
+    List<Card> hand = Arrays.asList(new Copper(), new Estate(), new Copper(), new Estate(), new Copper());
+    game.getActivePlayer().getHand().addAll(hand);
+    when(inputOutput.input()).thenReturn("0, 2, 4");
+
+    assertThat(game.getActivePlayer().getCoins(), is(0));
+    assertThat(game.getActivePlayer().getPlayed().size(), is(0));
+
+    game.play();
+
+    assertThat(game.getActivePlayer().getCoins(), is(3));
+    assertThat(game.getActivePlayer().getPlayed(), is(Arrays.asList(hand.get(0), hand.get(2), hand.get(4))));
+    assertThat(game.getActivePlayer().getHand(), is(Arrays.asList(hand.get(1), hand.get(3))));
+    assertThat(game.getStage(), is(Stage.TREASURE));
+  }
+
+  @Test
+  public void shouldSkipToBuyIfNoTreasureCards() {
+    Game game = new Game(Arrays.asList("wes", "bec"), new Dialog(inputOutput), inputOutput);
+    game.setStage(Stage.TREASURE);
+    game.getActivePlayer().getHand().clear();
+    game.getActivePlayer().getHand().addAll(Arrays.asList(new Estate(), new Province()));
+    game.play();
+    verify(inputOutput, never()).input();
+    assertThat(game.getStage(), is(Stage.BUY));
+  }
+
+  @Test
+  public void shouldBuy() {
+    Game game = new Game(Arrays.asList("wes", "bec"), new Dialog(inputOutput), inputOutput);
+    game.setStage(Stage.BUY);
+    game.getBoard().getPiles().clear();
+    game.getBoard().getPiles().addAll(Arrays.asList(
+        new Pile(Copper.class, 10), new Pile(Estate.class, 8), new Pile(Province.class, 8),
+        new Pile(ThroneRoom.class, 10), new Pile(Remodel.class, 10)));
+    game.getActivePlayer().getHand().clear();
+    game.getActivePlayer().setCoins(5);
+    when(inputOutput.input()).thenReturn("4");
+
+    assertThat(game.getActivePlayer().getBuys(), is(1));
+    assertThat(game.getActivePlayer().getPlayed().size(), is(0));
+
+    game.play();
+
+    verify(inputOutput).output("Bought Remodel");
+
+    assertThat(game.getActivePlayer().getDiscard().size(), is(1));
+    assertThat(game.getActivePlayer().getDiscard().get(0) instanceof Remodel, is(true));
+    assertThat(game.getActivePlayer().getCoins(), is(1));
+    assertThat(game.getActivePlayer().getBuys(), is(0));
+    assertThat(game.getBoard().getPile(p -> p.getSample() instanceof Remodel).size(), is(9));
+    assertThat(game.getStage(), is(Stage.BUY));
+  }
+
+  @Test
+  public void shouldSkipToCleanupIfNoBuys() {
+    Game game = new Game(Arrays.asList("wes", "bec"), new Dialog(inputOutput), inputOutput);
+    game.setStage(Stage.BUY);
+    game.getActivePlayer().setBuys(0);
+    game.play();
+    verify(inputOutput, never()).input();
+    assertThat(game.getStage(), is(Stage.CLEANUP));
   }
 
   @Test

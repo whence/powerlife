@@ -12,18 +12,18 @@ public class Remodel extends Card implements ActionCard {
 
   @Override
   public void play(Game game) {
-    OptionalInt idxTrash = game.getDialog().chooseOne("Select a card to trash",
+    OptionalInt iTrash = game.getDialog().chooseOne("Select a card to trash",
         Choices.ofCards(game.getActivePlayer().getHand(), c -> true));
-    if (idxTrash.isPresent()) {
+    if (iTrash.isPresent()) {
       Card trashedCard = Cards.moveOne(game.getActivePlayer().getHand(), game.getBoard().getTrash(),
-          idxTrash.getAsInt());
+          iTrash.getAsInt());
       game.getInputOutput().output("Trashed " + trashedCard);
 
-      OptionalInt idxGain = game.getDialog().chooseOne("Select a pile to gain",
+      OptionalInt iGain = game.getDialog().chooseOne("Select a pile to gain",
           Choices.ofPiles(game.getBoard().getPiles(),
               p -> !p.isEmpty() && p.getSample().getCost(game) <= trashedCard.getCost(game) + 2));
-      if (idxGain.isPresent()) {
-        Card gainedCard = Cards.moveOne(game.getBoard().getPiles().get(idxGain.getAsInt()),
+      if (iGain.isPresent()) {
+        Card gainedCard = Cards.moveOne(game.getBoard().getPiles().get(iGain.getAsInt()),
             game.getActivePlayer().getDiscard());
         game.getInputOutput().output("Gained " + gainedCard);
       } else {
