@@ -2,7 +2,9 @@ package powercards;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -63,5 +65,51 @@ public class Cards {
       throw new RuntimeException(String.format(
           "Cannot create %s (possibly no default constructor?)", clazz.getSimpleName()));
     }
+  }
+
+  public static List<Card> drawCards(Player player, int n) {
+    if (player.getDeck().size() > n) {
+      return drawCardsNoRecycle(player, n);
+    }
+
+    List<Card> cards = drawCardsFullDeck(player);
+
+    while (cards.size() < n && !player.getDiscard().isEmpty()) {
+      player.getDeck().addAll(player.getDiscard());
+      player.getDiscard().clear();
+      Collections.shuffle(player.getDeck());
+
+      int remaining = n - cards.size();
+      if (player.getDeck().size() > remaining) {
+        cards.addAll(drawCardsNoRecycle(player, remaining));
+        return cards;
+      }
+
+      cards.addAll(drawCardsFullDeck(player));
+    }
+
+    return cards;
+  }
+
+  private static List<Card> drawCardsNoRecycle(Player player, int n) {
+    List<Card> sub = player.getDeck().subList(player.getDeck().size() - n, player.getDeck().size());
+
+    List<Card> cards = new ArrayList<>(sub);
+    Collections.reverse(cards);
+
+    sub.clear();
+    player.getHand().addAll(cards);
+
+    return cards;
+  }
+
+  private static List<Card> drawCardsFullDeck(Player player) {
+    List<Card> cards = new ArrayList<>(player.getDeck());
+    Collections.reverse(cards);
+
+    player.getDeck().clear();
+    player.getHand().addAll(cards);
+
+    return cards;
   }
 }

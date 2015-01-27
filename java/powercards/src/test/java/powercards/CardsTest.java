@@ -4,16 +4,17 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
-import powercards.cards.Copper;
-import powercards.cards.Estate;
+import powercards.cards.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
+import static org.hamcrest.CoreMatchers.either;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardsTest {
@@ -21,13 +22,17 @@ public class CardsTest {
   private Card card2;
   private Card card3;
   private Card card4;
+  private Card card5;
+  private Card card6;
 
   @Before
   public void setUp() {
     card1 = new Copper();
-    card2 = new Estate();
-    card3 = new Copper();
+    card2 = new Silver();
+    card3 = new Gold();
     card4 = new Estate();
+    card5 = new Duchy();
+    card6 = new Province();
   }
 
   @Test
@@ -122,5 +127,133 @@ public class CardsTest {
     Copper a = Cards.of(Copper.class);
     Copper b = Cards.of(Copper.class);
     assertThat(a == b, is(false));
+  }
+
+  @Test
+  public void shouldDrawCards() {
+    Player player = new Player("wes");
+    player.getDeck().clear();
+    player.getDeck().addAll(Arrays.asList(card1, card2, card3));
+    player.getHand().clear();
+    player.getHand().add(card4);
+
+    List<Card> result = Cards.drawCards(player, 2);
+
+    assertThat(result, is(Arrays.asList(card3, card2)));
+    assertThat(player.getDeck(), is(Arrays.asList(card1)));
+    assertThat(player.getHand(), is(Arrays.asList(card4, card3, card2)));
+  }
+
+  @Test
+  public void shouldDrawCardsWhenDeckIsEmpty() {
+    Player player = new Player("wes");
+    player.getDeck().clear();
+    player.getHand().clear();
+    player.getHand().addAll(Arrays.asList(card1, card2));
+    player.getDiscard().clear();
+    player.getDiscard().addAll(Arrays.asList(card3));
+
+    List<Card> result = Cards.drawCards(player, 1);
+
+    assertThat(result, is(Arrays.asList(card3)));
+    assertThat(player.getDeck().size(), is(0));
+    assertThat(player.getHand(), is(Arrays.asList(card1, card2, card3)));
+    assertThat(player.getDiscard().size(), is(0));
+  }
+
+  @Test
+  public void shouldDrawCardsFullDeck() {
+    Player player = new Player("wes");
+    player.getDeck().clear();
+    player.getDeck().addAll(Arrays.asList(card1, card2, card3, card4));
+    player.getHand().clear();
+    player.getDiscard().clear();
+    player.getDiscard().addAll(Arrays.asList(card5, card6));
+
+    List<Card> result = Cards.drawCards(player, 4);
+
+    assertThat(result, is(Arrays.asList(card4, card3, card2, card1)));
+    assertThat(player.getDeck().size(), is(0));
+    assertThat(player.getHand(), is(Arrays.asList(card4, card3, card2, card1)));
+    assertThat(player.getDiscard(), is(Arrays.asList(card5, card6)));
+  }
+
+  @Test
+  public void shouldDrawCardsAndRecycleDiscard() {
+    Player player = new Player("wes");
+    player.getDeck().clear();
+    player.getDeck().addAll(Arrays.asList(card1, card2, card3));
+    player.getHand().clear();
+    player.getHand().add(card4);
+    player.getDiscard().clear();
+    player.getDiscard().addAll(Arrays.asList(card5, card6));
+
+    List<Card> result = Cards.drawCards(player, 4);
+
+    assertThat(result.size(), is(4));
+
+    if (result.get(3) == card5) {
+      assertThat(result, is(Arrays.asList(card3, card2, card1, card5)));
+      assertThat(player.getDeck(), is(Arrays.asList(card6)));
+      assertThat(player.getHand(), is(Arrays.asList(card4, card3, card2, card1, card5)));
+    } else {
+      assertThat(result, is(Arrays.asList(card3, card2, card1, card6)));
+      assertThat(player.getDeck(), is(Arrays.asList(card5)));
+      assertThat(player.getHand(), is(Arrays.asList(card4, card3, card2, card1, card6)));
+    }
+
+    assertThat(player.getDiscard().size(), is(0));
+  }
+
+  @Test
+  public void shouldDrawAllCardsAndRecycleDiscard() {
+    Player player = new Player("wes");
+    player.getDeck().clear();
+    player.getDeck().addAll(Arrays.asList(card1, card2, card3));
+    player.getHand().clear();
+    player.getHand().add(card4);
+    player.getDiscard().clear();
+    player.getDiscard().addAll(Arrays.asList(card5, card6));
+
+    List<Card> result = Cards.drawCards(player, 5);
+
+    assertThat(result.size(), is(5));
+
+    if (result.get(4) == card5) {
+      assertThat(result, is(Arrays.asList(card3, card2, card1, card6, card5)));
+      assertThat(player.getHand(), is(Arrays.asList(card4, card3, card2, card1, card6, card5)));
+    } else {
+      assertThat(result, is(Arrays.asList(card3, card2, card1, card5, card6)));
+      assertThat(player.getHand(), is(Arrays.asList(card4, card3, card2, card1, card5, card6)));
+    }
+
+    assertThat(player.getDeck().size(), is(0));
+    assertThat(player.getDiscard().size(), is(0));
+  }
+
+  @Test
+  public void shouldDrawCardsButStopIfNoMoreCardsToDraw() {
+    Player player = new Player("wes");
+    player.getDeck().clear();
+    player.getDeck().addAll(Arrays.asList(card1, card2));
+    player.getHand().clear();
+    player.getHand().addAll(Arrays.asList(card3, card4));
+    player.getDiscard().clear();
+    player.getDiscard().addAll(Arrays.asList(card5, card6));
+
+    List<Card> result = Cards.drawCards(player, 5);
+
+    assertThat(result.size(), is(4));
+
+    if (result.get(3) == card5) {
+      assertThat(result, is(Arrays.asList(card2, card1, card6, card5)));
+      assertThat(player.getHand(), is(Arrays.asList(card3, card4, card2, card1, card6, card5)));
+    } else {
+      assertThat(result, is(Arrays.asList(card2, card1, card5, card6)));
+      assertThat(player.getHand(), is(Arrays.asList(card3, card4, card2, card1, card5, card6)));
+    }
+
+    assertThat(player.getDeck().size(), is(0));
+    assertThat(player.getDiscard().size(), is(0));
   }
 }

@@ -45,12 +45,22 @@ public class AssumptionTest {
     e.add(card1);
     e.add(card3);
     assertThat(e, is(Arrays.asList(card1, card3)));
+    assertThat(Arrays.asList(card1, card3), is(e));
   }
 
   @Test
   public void arrayShouldWorkWithIsOperator() {
     int[] a = new int[] { 1, 2, 3 };
     int[] b = new int[] { 1, 2, 3 };
+    assertThat(a == b, is(false));
+    assertThat(a, is(b));
+    assertThat(b, is(a));
+  }
+
+  @Test
+  public void stringShouldWorkWithIsOperator() {
+    String a = new String("wes");
+    String b = new String("wes");
     assertThat(a == b, is(false));
     assertThat(a, is(b));
     assertThat(b, is(a));
