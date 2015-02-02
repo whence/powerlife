@@ -1,6 +1,5 @@
 package powercards;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -136,8 +135,8 @@ public class GameTest {
     game.setStage(Stage.BUY);
     game.getBoard().getPiles().clear();
     game.getBoard().getPiles().addAll(Arrays.asList(
-        new Pile(Copper.class, 10), new Pile(Estate.class, 8), new Pile(Province.class, 8),
-        new Pile(ThroneRoom.class, 10), new Pile(Remodel.class, 10)));
+        new Pile(Copper::new, 10), new Pile(Estate::new, 8), new Pile(Province::new, 8),
+        new Pile(ThroneRoom::new, 10), new Pile(Remodel::new, 10)));
     game.getActivePlayer().getHand().clear();
     game.getActivePlayer().setCoins(5);
     when(inputOutput.input()).thenReturn("4");
@@ -172,7 +171,7 @@ public class GameTest {
     Game game = new Game(Arrays.asList("wes", "bec"), new Dialog(inputOutput), inputOutput);
     game.getBoard().getPiles().clear();
     game.getBoard().getPiles().addAll(Arrays.asList(
-        new Pile(Copper.class, 10), new Pile(Estate.class, 8), new Pile(ThroneRoom.class, 4)));
+        new Pile(Copper::new, 10), new Pile(Estate::new, 8), new Pile(ThroneRoom::new, 4)));
     game.getActivePlayer().getHand().clear();
     List<Card> hand = Arrays.asList(new Estate(), new Remodel(), new Copper(), new Estate(), new Copper());
     game.getActivePlayer().getHand().addAll(hand);

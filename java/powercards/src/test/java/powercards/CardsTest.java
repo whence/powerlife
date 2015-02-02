@@ -10,11 +10,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
-import static org.hamcrest.CoreMatchers.either;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CardsTest {
@@ -57,7 +55,7 @@ public class CardsTest {
 
   @Test
   public void shouldMoveOneFromPile() {
-    Pile pile = new Pile(Copper.class, 10);
+    Pile pile = new Pile(Copper::new, 10);
     List<Card> target = new ArrayList<>(Arrays.asList(card1, card2));
 
     Card card = Cards.moveOne(pile, target);
@@ -120,13 +118,6 @@ public class CardsTest {
     assertThat(result, is(new int[] { 5, 3, 2, 1 }));
     assertThat(original, is(new int[] { 1, 2, 5, 3 }));
     assertThat(result == original, is(false));
-  }
-
-  @Test
-  public void shouldCreateNewCard() {
-    Copper a = Cards.of(Copper.class);
-    Copper b = Cards.of(Copper.class);
-    assertThat(a == b, is(false));
   }
 
   @Test

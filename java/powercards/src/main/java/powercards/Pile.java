@@ -1,16 +1,17 @@
 package powercards;
 
 import java.util.Stack;
+import java.util.function.Supplier;
 
 public class Pile {
   private final Card sample;
   private int size;
-  private final Class<? extends Card> clazz;
+  private final Supplier<Card> cardSupplier;
   private final Stack<Card> buffer;
 
-  public Pile(Class<? extends Card> clazz, int size) {
-    this.clazz = clazz;
-    this.sample = Cards.of(clazz);
+  public Pile(Supplier<Card> cardSupplier, int size) {
+    this.cardSupplier = cardSupplier;
+    this.sample = cardSupplier.get();
     this.size = size;
     this.buffer = new Stack<>();
   }
@@ -28,6 +29,10 @@ public class Pile {
   }
 
   public void push(Card card) {
+    if (!card.getName().equals(sample.getName())) {
+      throw new IllegalArgumentException(String.format("Cannot push %s card into %s pile",
+          card.getName(), sample.getName()));
+    }
     buffer.push(card);
     size += 1;
   }
@@ -40,7 +45,7 @@ public class Pile {
     if (!buffer.isEmpty()) {
       card = buffer.pop();
     } else {
-      card = Cards.of(clazz);
+      card = cardSupplier.get();
     }
     size -= 1;
     return card;

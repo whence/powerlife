@@ -27,7 +27,7 @@ public class ChoicesTest {
 
   @Test
   public void shouldConvertPilesToChoices() {
-    List<Pile> piles = Arrays.asList(new Pile(Copper.class, 10), new Pile(Estate.class, 8));
+    List<Pile> piles = Arrays.asList(new Pile(Copper::new, 10), new Pile(Estate::new, 8));
     List<Choice> choices = Choices.ofPiles(piles, p -> p.getSample() instanceof TreasureCard);
     assertThat(choices.size(), is(2));
     assertThat(choices.get(0).getName(), is("Copper"));

@@ -58,15 +58,6 @@ public class Cards {
     return array;
   }
 
-  public static <T extends Card> T of(Class<T> clazz) {
-    try {
-      return clazz.newInstance();
-    } catch (InstantiationException | IllegalAccessException e) {
-      throw new RuntimeException(String.format(
-          "Cannot create %s (possibly no default constructor?)", clazz.getSimpleName()));
-    }
-  }
-
   public static List<Card> drawCards(Player player, int n) {
     if (player.getDeck().size() > n) {
       return drawCardsNoRecycle(player, n);

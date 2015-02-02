@@ -28,7 +28,7 @@ public class Game {
 
     this.activePlayerIndex = RandomUtils.nextInt(0, players.size());
     this.stage = Stage.ACTION;
-    this.board = new Board(Arrays.asList(new Pile(Copper.class, 60), new Pile(Estate.class, 12)));
+    this.board = new Board(Arrays.asList(new Pile(Copper::new, 60), new Pile(Estate::new, 12)));
     this.dialog = dialog;
     this.inputOutput = inputOutput;
 
