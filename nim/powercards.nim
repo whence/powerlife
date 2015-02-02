@@ -18,7 +18,9 @@ type
 
   Pile = ref object
     sample: Card
+    factory: proc (): Card
     size: int
+    buffer: seq[Card]
 
   Card = ref CardObj
   CardObj = object of RootObj
@@ -64,6 +66,13 @@ proc newPlayer(name: string): Player =
   result.played = @[]
   result.discarded = @[]
 
+proc newPile(factory: proc (): Card, size: int): Pile =
+  new(result)
+  result.factory = factory
+  result.size = size
+  result.sample = factory()
+  result.buffer = @[]
+
 proc newGame(names: openArray[string]): Game =
   new(result)
   result.players = names.map(newPlayer)
@@ -92,4 +101,5 @@ let game = newGame(["wes", "bec"])
 
 echo($game.active.hand)
 let cards = game.active.hand.filter(proc(c: Card): bool = c of TreasureCard)
+let pile = newPile(proc(): Card = Copper(), 10)
 echo($cards)
