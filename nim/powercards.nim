@@ -6,7 +6,11 @@ type
     players: seq[Player]
     active_player_index: int
     board: Board
+    stage: Stage
     
+  Stage = enum
+    ACTION, TREASURE, BUY, CLEANUP  
+
   Player = ref object
     name: string
     deck, hand, played, discarded: seq[Card]
@@ -21,6 +25,15 @@ type
     factory: proc (): Card
     size: int
     buffer: seq[Card]
+
+  ResponseKind = enum
+    UNSELECTABLE, SKIP, ONE, MULTI
+
+  Response = object
+    case kind: ResponseKind
+    of UNSELECTABLE, SKIP: reason: string
+    of ONE: index: int
+    of MULTI: indexes: seq[int]
 
   Card = ref CardObj
   CardObj = object of RootObj
@@ -41,7 +54,6 @@ proc shuffle[T](x: var seq[T]) =
   for i in countdown(x.high, 0):
     let j = random(i + 1)
     swap(x[i], x[j])
-
 
 method name(card: Card): string = "Card"
 method name(card: Copper): string = "Copper"
@@ -65,6 +77,9 @@ proc newPlayer(name: string): Player =
   result.hand = deck[5..9]
   result.played = @[]
   result.discarded = @[]
+  result.actions = 0
+  result.buys = 0
+  result.coins = 0
 
 proc newPile(factory: proc (): Card, size: int): Pile =
   new(result)
@@ -73,13 +88,30 @@ proc newPile(factory: proc (): Card, size: int): Pile =
   result.sample = factory()
   result.buffer = @[]
 
+proc isEmpty(pile: Pile): bool = pile.size <= 0
+
+proc push(pile: Pile, card: Card) =
+  pile.buffer.add(card)
+  pile.size += 1
+
+proc pop(pile: Pile): Card =
+  if pile.buffer.len > 0:
+    result = pile.buffer.pop
+  else:
+    result = pile.factory()
+  pile.size -= 1
+    
+proc active(game: Game): Player =
+  game.players[game.active_player_index]
+
 proc newGame(names: openArray[string]): Game =
   new(result)
   result.players = names.map(newPlayer)
   result.active_player_index = random(result.players.len)
-
-proc active(game: Game): Player =
-  game.players[game.active_player_index]
+  result.stage = ACTION
+  result.board = Board(trash: @[], piles: @[newPile(proc(): Card = Copper(), 60), newPile(proc(): Card = Estate(), 12)])
+  result.active.actions = 1
+  result.active.buys = 1
 
 method cost(card: Card): int = 0
 method cost(card: Copper): int = 0
@@ -99,7 +131,16 @@ randomize()
 let game = newGame(["wes", "bec"])
 #echo(game.repr)
 
-echo($game.active.hand)
+#echo($game.active.hand)
 let cards = game.active.hand.filter(proc(c: Card): bool = c of TreasureCard)
+#echo($cards)
+
 let pile = newPile(proc(): Card = Copper(), 10)
-echo($cards)
+
+let responses = @[Response(kind: ONE, index: 1), Response(kind: SKIP, reason: "no card to select")]
+
+for r in responses:
+  case r.kind:
+    of ONE: echo("one")
+    of SKIP: echo("skip")
+    else: echo("else")
