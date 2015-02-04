@@ -1,5 +1,5 @@
 import math
-import sequtils
+import sequtils except delete
 
 type
   Game = ref object
@@ -9,7 +9,7 @@ type
     stage: Stage
     
   Stage = enum
-    ACTION, TREASURE, BUY, CLEANUP  
+    Action, Treasure, Buy, Cleanup
 
   Player = ref object
     name: string
@@ -27,51 +27,83 @@ type
     buffer: seq[Card]
 
   ResponseKind = enum
-    UNSELECTABLE, SKIP, ONE, MULTI
+    Unselectable, Skip, One, Multi
 
-  Response = object
+  Response = ref object
     case kind: ResponseKind
-    of UNSELECTABLE, SKIP: reason: string
-    of ONE: index: int
-    of MULTI: indexes: seq[int]
+    of Unselectable, Skip: reason: string
+    of One: index: int
+    of Multi: indexes: seq[int]
 
   Card = ref CardObj
   CardObj = object of RootObj
+    FName: string
+    FBaseCost: int
 
-  ActionCard = ref ActionCardObj
-  ActionCardObj = object of CardObj
+  ActionCard = ref object of CardObj
+    FPlay: proc (game: Game) {.locks: 0.}
+    
+  TreasureCard = ref object of CardObj
+    FCoins: int
 
-  TreasureCard = ref TreasureCardObj
-  TreasureCardObj = object of CardObj
+  VictoryCard = ref object of CardObj
+    FVps: int
 
-  VictoryCard = ref VictoryCardObj
-  VictoryCardObj = object of CardObj
+  Hybrid = ref object of CardObj
+    FVps: int
 
-  Copper = ref object of TreasureCardObj
-  Estate = ref object of VictoryCardObj
+  Choice = tuple[name: string, selectable: bool]
+
+proc active(game: Game): Player =
+  game.players[game.active_player_index]
+
+proc `$`(card: Card): string = card.FName
+
+method play(card: Card, game: Game) = discard
+method play(card: ActionCard, game: Game) = card.FPlay(game)
+method play(card: TreasureCard, game: Game) = game.active.coins += card.FCoins
+method play(card: Hybrid, game: Game) = echo("playing " & $card)
+
+method cost(card: Card, game: Game): int = card.FBaseCost
+method cost(card: Hybrid, game: Game): int = 99
+
+method victoryPoint(card: Card, game: Game): int = 0
+method victoryPoint(card: VictoryCard, game: Game): int = card.FVps
+method victoryPoint(card: Hybrid, game: Game): int = card.FVps
+
+method isActionable(card: Card): bool = false
+method isActionable(card: ActionCard): bool = true
+
+method isTreasurable(card: Card): bool = false
+method isTreasurable(card: TreasureCard): bool = true
+method isTreasurable(card: Hybrid): bool = true
+
+method isVictoriable(card: Card): bool = false
+method isVictoriable(card: VictoryCard): bool = true
+method isVictoriable(card: Hybrid): bool = true
+
+proc newCopper(): Card = TreasureCard(FName: "Copper", FBaseCost: 0, FCoins: 1)
+proc newEstate(): Card = VictoryCard(FName: "Estate", FBaseCost: 2, FVps: 1)
+
+proc playRemodel(game: Game) = echo("playing remodel")
+proc newRemodel: Card = ActionCard(FName: "Remodel", FBaseCost: 4, FPlay: playRemodel)
+
+proc playSmithy(game: Game)= echo("playing smithy")
+proc newSmithy: Card = ActionCard(FName: "Smithy", FBaseCost: 4, FPlay: playSmithy)
 
 proc shuffle[T](x: var seq[T]) =
   for i in countdown(x.high, 0):
     let j = random(i + 1)
     swap(x[i], x[j])
 
-method name(card: Card): string = "Card"
-method name(card: Copper): string = "Copper"
-method name(card: Estate): string = "Estate"
-proc `$`(card: Card): string = card.name
-
-proc print(cards: openArray[Card]) =
-  for i, c in cards:
-    echo($i & c.name)
-
 proc newPlayer(name: string): Player =
   new(result)
   result.name = name
   var deck = newSeq[Card](10)
   for i in 0..2:
-    deck[i] = Estate()
+    deck[i] = newEstate()
   for i in 3..9:
-    deck[i] = Copper()
+    deck[i] = newCopper()
   deck.shuffle
   result.deck = deck[0..4]
   result.hand = deck[5..9]
@@ -101,30 +133,17 @@ proc pop(pile: Pile): Card =
     result = pile.factory()
   pile.size -= 1
     
-proc active(game: Game): Player =
-  game.players[game.active_player_index]
-
 proc newGame(names: openArray[string]): Game =
   new(result)
   result.players = names.map(newPlayer)
   result.active_player_index = random(result.players.len)
-  result.stage = ACTION
-  result.board = Board(trash: @[], piles: @[newPile(proc(): Card = Copper(), 60), newPile(proc(): Card = Estate(), 12)])
+  result.stage = Action
+  result.board = Board(trash: @[], piles: @[newPile(newCopper, 60), newPile(newEstate, 12)])
   result.active.actions = 1
   result.active.buys = 1
 
-method cost(card: Card): int = 0
-method cost(card: Copper): int = 0
-method cost(card: Estate): int = 2
-
-method play(card: ActionCard) = discard
-
-method play(card: TreasureCard, game: Game) = discard
-method play(card: Copper, game: Game) =
-  game.active.coins += 1
-
-method victoryPoint(card: VictoryCard): int = 0
-method victoryPoint(card: Estate): int = 1
+proc moveOne(src, dst: seq[Card], index: int): Card =
+  src[index]
 
 randomize()
 
@@ -132,15 +151,21 @@ let game = newGame(["wes", "bec"])
 #echo(game.repr)
 
 #echo($game.active.hand)
-let cards = game.active.hand.filter(proc(c: Card): bool = c of TreasureCard)
+let cards = game.active.hand.filterit(it.isTreasurable)
 #echo($cards)
 
-let pile = newPile(proc(): Card = Copper(), 10)
+let pile = newPile(newCopper, 10)
 
 let responses = @[Response(kind: ONE, index: 1), Response(kind: SKIP, reason: "no card to select")]
 
-for r in responses:
-  case r.kind:
-    of ONE: echo("one")
-    of SKIP: echo("skip")
-    else: echo("else")
+when false:
+  for r in responses:
+    case r.kind:
+      of ONE: echo("one")
+      of SKIP: echo("skip")
+      else: echo("else")
+
+let cards2 = @[newCopper(), newEstate(), Hybrid(FName: "Hybrid")]
+echo($cards2)
+let choices = cards2.mapit(Choice, ($it, it.isActionable))
+echo($choices)
