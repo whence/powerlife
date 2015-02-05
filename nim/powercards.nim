@@ -1,6 +1,7 @@
 import math
 import sequtils
 import algorithm
+from strutils import nil
 
 type
   Game = ref object
@@ -8,7 +9,7 @@ type
     active_player_index: int
     board: Board
     stage: Stage
-    inputOutput: InputOutput
+    inout: InputOutput
     
   Stage = enum
     Action, Treasure, Buy, Cleanup
@@ -60,6 +61,8 @@ type
   InputOutputObj = object of RootObj
   RealInputOutput = ref object of InputOutputObj
   FakeInputOutput = ref object of InputOutputObj
+    inBuf: seq[string]
+    outBuf: seq[string]
 
 proc active(game: Game): Player =
   game.players[game.active_player_index]
@@ -211,26 +214,79 @@ proc drawCards(player: Player, n: int): seq[Card] =
 
   return cards
 
-method output(inputOutput: InputOutput, message: string) = discard
-method output(inputOutput: FakeInputOutput, message: string) = discard
-method output(inputOutput: RealInputOutput, message: string) = echo(message)
+method output(inout: InputOutput, message: string) = discard
+method output(inout: FakeInputOutput, message: string) = inout.outBuf.add(message)
+method output(inout: RealInputOutput, message: string) = echo(message)
 
-proc outputChoices(inputOutput: InputOutput, choices: seq[Choice]) =
+method input(inout: InputOutput): string = nil
+method input(inout: FakeInputOutput): string = inout.inBuf.pop
+method input(inout: RealInputOutput): string = stdin.readline
+
+proc outputChoices(inout: InputOutput, choices: seq[Choice]) =
   for i, c in choices:
-    inputOutput.output("[" & $i & "] " & c.name & " (" & $c.selectable & ")")
+    inout.output("[" & $i & "] " & c.name & " (" & $c.selectable & ")")
 
-proc chooseOne(inputOutput: InputOutput, message: string, choices: seq[Choice]): Response =
+proc chooseOne(inout: InputOutput, message: string, choices: seq[Choice]): Response =
   if not choices.any(it.selectable):
     return Response(kind: Unselectable)
 
   while true:
-    inputOutput.output(message)
-    inputOutput.outputChoices(choices)
+    inout.output(message)
+    inout.outputChoices(choices)
+    let index = strutils.parseInt(inout.input())
+    if choices[index].selectable:
+      return Response(kind: One, index: index)
+
+    inout.output(choices[index].name & " is not selectable")
+
+proc chooseOptionalOne(inout: InputOutput, message: string, choices: seq[Choice]): Response =
+  if not choices.any(it.selectable):
+    return Response(kind: Unselectable)
+
+  while true:
+    inout.output(message)
+    inout.outputChoices(choices)
+    inout.output("or skip")
+    let input = inout.input()
+    if input == "skip":
+      return Response(kind: Skip)
+      
+    let index = strutils.parseInt(input)
+    if choices[index].selectable:
+      return Response(kind: One, index: index)
+
+    inout.output(choices[index].name & " is not selectable")
+
+proc chooseUnlimited(inout: InputOutput, message: string, choices: seq[Choice]): Response =
+  if not choices.any(it.selectable):
+    return Response(kind: Unselectable)
+
+  while true:
+    inout.output(message)
+    inout.outputChoices(choices)
+    inout.output("or all, or skip")
+    let input = inout.input()
+    if input == "skip":
+      return Response(kind: Skip)
+
+    if input == "all":
+      let indexes = toSeq(pairs(choices)).filterit(it.val.selectable).mapit(int, it.key)
+      return Response(kind: Multi, indexes: indexes)
+      
+    var parts = strutils.split(input, ',')
+    parts.mapit(strutils.strip(it))
+    parts.keepitif(it.len > 0)
+    let indexes = parts.map(strutils.parseint)
+    
+    if not indexes.any(not choices[it].selectable):
+      return Response(kind: Multi, indexes: indexes)
+
+    inout.output("some choices are not selectable")
 
 randomize()
 
 let game = newGame(["wes", "bec"])
-game.inputOutput = RealInputOutput()
+game.inout = RealInputOutput()
 #echo(game.repr)
 
 #echo($game.active.hand)
@@ -250,5 +306,5 @@ when false:
 
 let cards2 = @[newCopper(), newEstate(), Hybrid(FName: "Hybrid")]
 echo($cards2)
-let choices = cards2.mapit(Choice, ($it, it.isActionable))
-game.inputOutput.outputChoices(choices)
+let choices = cards2.mapit(Choice, ($it, it.isTreasurable))
+game.inout.outputChoices(choices)
