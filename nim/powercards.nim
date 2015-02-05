@@ -1,5 +1,6 @@
 import math
-import sequtils except delete
+import sequtils
+import algorithm
 
 type
   Game = ref object
@@ -142,8 +143,59 @@ proc newGame(names: openArray[string]): Game =
   result.active.actions = 1
   result.active.buys = 1
 
-proc moveOne(src, dst: seq[Card], index: int): Card =
-  src[index]
+proc moveOne(src, dst: var seq[Card], index: int): Card =
+  result = src[index]
+  system.delete(src, index)
+  dst.add(result)
+
+proc moveOne(pile: Pile, dst: var seq[Card]): Card =
+  result = pile.pop
+  dst.add(result)
+
+proc moveMany(src, dst: var seq[Card], indexes: seq[int]): seq[Card] =
+  result = indexes.mapit(Card, src[it])
+  if result.len == src.len:
+    src.setlen(0)
+  else:
+    var ix = indexes
+    ix.sort(system.cmp[int], SortOrder.Descending)
+    for i in ix:
+      system.delete(src, i)
+  dst.add(result)
+
+proc drawCardsNoRecycle(player: Player, n: int): seq[Card] =
+  let first = player.deck.len - n
+  let last = player.deck.len - 1
+  result = player.deck[first..last]
+  result.reverse
+  sequtils.delete(player.deck, first, last)
+  player.hand.add(result)
+
+proc drawCardsFullDeck(player: Player): seq[Card] =
+  result = player.deck
+  result.reverse
+  player.deck.setlen(0)
+  player.hand.add(result)
+
+proc drawCards(player: Player, n: int): seq[Card] =
+  if player.deck.len > n:
+    return drawCardsNoRecycle(player, n)
+
+  var cards = drawCardsFullDeck(player)
+
+  while cards.len < n and player.discarded.len > 0:
+    player.deck.add(player.discarded)
+    player.discarded.setlen(0)
+    player.deck.shuffle
+
+    let remaining = n - cards.len
+    if player.deck.len > remaining:
+      cards.add(drawCardsNoRecycle(player, remaining))
+      return cards
+
+    cards.add(drawCardsFullDeck(player))
+
+  return cards
 
 randomize()
 
