@@ -8,6 +8,7 @@ type
     active_player_index: int
     board: Board
     stage: Stage
+    inputOutput: InputOutput
     
   Stage = enum
     Action, Treasure, Buy, Cleanup
@@ -55,6 +56,11 @@ type
 
   Choice = tuple[name: string, selectable: bool]
 
+  InputOutput = ref InputOutputObj
+  InputOutputObj = object of RootObj
+  RealInputOutput = ref object of InputOutputObj
+  FakeInputOutput = ref object of InputOutputObj
+
 proc active(game: Game): Player =
   game.players[game.active_player_index]
 
@@ -96,6 +102,14 @@ proc shuffle[T](x: var seq[T]) =
   for i in countdown(x.high, 0):
     let j = random(i + 1)
     swap(x[i], x[j])
+
+template any(seq1, pred: expr): expr =
+  var result {.gensym.}: bool = false
+  for it {.inject.} in items(seq1):
+    result = pred
+    if result:
+      break
+  result
 
 proc newPlayer(name: string): Player =
   new(result)
@@ -197,9 +211,26 @@ proc drawCards(player: Player, n: int): seq[Card] =
 
   return cards
 
+method output(inputOutput: InputOutput, message: string) = discard
+method output(inputOutput: FakeInputOutput, message: string) = discard
+method output(inputOutput: RealInputOutput, message: string) = echo(message)
+
+proc outputChoices(inputOutput: InputOutput, choices: seq[Choice]) =
+  for i, c in choices:
+    inputOutput.output("[" & $i & "] " & c.name & " (" & $c.selectable & ")")
+
+proc chooseOne(inputOutput: InputOutput, message: string, choices: seq[Choice]): Response =
+  if not choices.any(it.selectable):
+    return Response(kind: Unselectable)
+
+  while true:
+    inputOutput.output(message)
+    inputOutput.outputChoices(choices)
+
 randomize()
 
 let game = newGame(["wes", "bec"])
+game.inputOutput = RealInputOutput()
 #echo(game.repr)
 
 #echo($game.active.hand)
@@ -208,16 +239,16 @@ let cards = game.active.hand.filterit(it.isTreasurable)
 
 let pile = newPile(newCopper, 10)
 
-let responses = @[Response(kind: ONE, index: 1), Response(kind: SKIP, reason: "no card to select")]
+let responses = @[Response(kind: One, index: 1), Response(kind: Skip, reason: "no card to select")]
 
 when false:
   for r in responses:
     case r.kind:
-      of ONE: echo("one")
-      of SKIP: echo("skip")
+      of One: echo("one")
+      of Skip: echo("skip")
       else: echo("else")
 
 let cards2 = @[newCopper(), newEstate(), Hybrid(FName: "Hybrid")]
 echo($cards2)
 let choices = cards2.mapit(Choice, ($it, it.isActionable))
-echo($choices)
+game.inputOutput.outputChoices(choices)
