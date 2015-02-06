@@ -30,7 +30,7 @@ public class Remodel extends Card implements ActionCard {
         game.getInputOutput().output("No pile available to gain");
       }
     } else {
-      game.getInputOutput().output("No card in hard to trash");
+      game.getInputOutput().output("No card in hand to trash");
     }
   }
 }
