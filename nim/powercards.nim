@@ -283,6 +283,39 @@ proc chooseUnlimited(inout: InputOutput, message: string, choices: seq[Choice]):
 
     inout.output("some choices are not selectable")
 
+proc playAction(game: Game) =
+  if game.active.actions == 0:
+    game.inout.output("no more actions, skip to treasure stage")
+    game.stage = Treasure
+  else:
+    let iAction = game.inout.choose_optional_one(
+      message = "select an action card to play",
+      choices = game.active.hand.mapit(Choice, ($it, it.isActionable)))
+    case iAction.kind:
+      of One:
+        let actionCard = game.active.hand.move_one(game.active.played, iAction.index)
+        game.active.actions -= 1
+        game.inout.output("playing " & $actionCard)
+        actionCard.play(game)
+      of Skip, Unselectable:
+        game.inout.output("skip to treasure stage")
+        game.stage = Treasure
+      else: discard
+
+proc playTreasure(game: Game) =
+  let iTreasure = game.inout.choose_unlimited(
+    message = "select treasure cards to play",
+    choices = game.active.hand.mapit(Choice, ($it, it.isTreasurable)))
+  case iTreasure.kind:
+    of Multi:
+      let treasureCards = game.active.hand.move_many(game.active.played, iTreasure.indexes)
+      for c in treasureCards:
+        c.play(game)
+    of Skip, Unselectable:
+      game.inout.output("skip to buy stage")
+      game.stage = Buy
+    else: discard
+
 randomize()
 
 let game = newGame(["wes", "bec"])
