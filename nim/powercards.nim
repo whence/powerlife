@@ -70,6 +70,16 @@ type
 proc active(game: Game): Player =
   game.players[game.active_player_index]
 
+proc activate(p: Player) =
+  p.actions = 1
+  p.buys = 1
+  p.coins = 0
+
+proc deactivate(p: Player) =
+  p.actions = 0
+  p.buys = 0
+  p.coins = 0
+
 proc `$`(card: Card): string = card.FName
 
 method play(card: Card, game: Game) = discard
@@ -102,6 +112,10 @@ proc shuffle[T](x: var seq[T]) =
   for i in countdown(x.high, 0):
     let j = random(i + 1)
     swap(x[i], x[j])
+
+proc cycle(x, cap: int): int =
+  let y = x + 1
+  return if y >= cap: 0 else: y
 
 template any(seq1, pred: expr): expr =
   var result {.gensym.}: bool = false
@@ -168,6 +182,11 @@ proc moveMany(src, dst: var seq[Card], indexes: seq[int]): seq[Card] =
       system.delete(src, i)
   dst.add(result)
 
+proc moveAll(src, dst: var seq[Card]): seq[Card] {.discardable.} =
+  result = src
+  src.setlen(0)
+  dst.add(result)
+
 proc drawCardsNoRecycle(player: Player, n: int): seq[Card] =
   let first = player.deck.len - n
   let last = player.deck.len - 1
@@ -182,7 +201,7 @@ proc drawCardsFullDeck(player: Player): seq[Card] =
   player.deck.setlen(0)
   player.hand.add(result)
 
-proc drawCards(player: Player, n: int): seq[Card] =
+proc drawCards(player: Player, n: int): seq[Card] {.discardable.} =
   if player.deck.len > n:
     return drawCardsNoRecycle(player, n)
 
@@ -276,92 +295,147 @@ proc playAction(game: Game) =
     game.inout.output("no more actions, skip to treasure stage")
     game.stage = Treasure
   else:
-    let resp = game.inout.choose_optional_one("select an action card to play", game.active.hand.mapit(Choice, ($it, it.isActionable)))
-    case resp.kind:
-      of One:
-        let card = game.active.hand.move_one(game.active.played, resp.index)
-        game.active.actions -= 1
-        game.inout.output("playing " & $card)
-        card.play(game)
-      of Skip, Unselectable:
-        game.inout.output("skip to treasure stage")
-        game.stage = Treasure
-      else: discard
+    let r = game.inout.choose_optional_one("select an action card to play", game.active.hand.mapit(Choice, ($it, it.isActionable)))
+    case r.kind:
+    of One:
+      let card = game.active.hand.move_one(game.active.played, r.index)
+      game.active.actions -= 1
+      game.inout.output("playing " & $card)
+      card.play(game)
+    of Skip, Unselectable:
+      game.inout.output("skip to treasure stage")
+      game.stage = Treasure
+    else: discard
 
 proc playTreasure(game: Game) =
-  let resp = game.inout.choose_unlimited("select treasure cards to play", game.active.hand.mapit(Choice, ($it, it.isTreasurable)))
-  case resp.kind:
-    of Multi:
-      let cards = game.active.hand.move_many(game.active.played, resp.indexes)
-      for c in cards:
-        c.play(game)
-    of Skip, Unselectable:
-      game.inout.output("skip to buy stage")
-      game.stage = Buy
-    else: discard
+  let r = game.inout.choose_unlimited("select treasure cards to play", game.active.hand.mapit(Choice, ($it, it.isTreasurable)))
+  case r.kind:
+  of Multi:
+    let cards = game.active.hand.move_many(game.active.played, r.indexes)
+    for c in cards:
+      c.play(game)
+  of Skip, Unselectable:
+    game.inout.output("skip to buy stage")
+    game.stage = Buy
+  else: discard
 
 proc playBuy(game: Game) =
   if game.active.buys == 0:
     game.inout.output("no more buys, skip to cleanup stage")
     game.stage = Cleanup
   else:
-    let resp = game.inout.choose_optional_one("select a pile to buy", game.board.piles.mapit(Choice, ($it.sample, not it.isEmpty and it.sample.cost(game) <= game.active.coins)))
-    case resp.kind:
-      of One:
-        let card = game.board.piles[resp.index].move_one(game.active.discarded)
-        game.inout.output("bought " & $card)
-        game.active.actions -= card.cost(game)
-        game.active.buys -= 1
-      of Skip, Unselectable:
-        game.inout.output("skip to cleanup stage")
-        game.stage = Cleanup
-      else: discard
+    let r = game.inout.choose_optional_one("select a pile to buy", game.board.piles.mapit(Choice, ($it.sample, not it.isEmpty and it.sample.cost(game) <= game.active.coins)))
+    case r.kind:
+    of One:
+      let card = game.board.piles[r.index].move_one(game.active.discarded)
+      game.inout.output("bought " & $card)
+      game.active.actions -= card.cost(game)
+      game.active.buys -= 1
+    of Skip, Unselectable:
+      game.inout.output("skip to cleanup stage")
+      game.stage = Cleanup
+    else: discard
 
-proc playCleanup(game: Game) = discard
+proc playCleanup(game: Game) =
+  game.active.hand.moveall(game.active.discarded)
+  game.active.played.moveall(game.active.discarded)
+  game.active.drawcards(5)
+  game.active.deactivate
+  game.active_player_index = cycle(game.active_player_index, game.players.len)
+  game.active.activate
 
 proc play(game: Game) =
   case game.stage:
-    of Action: playAction(game)
-    of Treasure: playTreasure(game)
-    of Buy: playBuy(game)
-    of Cleanup: playCleanup(game)
+  of Action: playAction(game)
+  of Treasure: playTreasure(game)
+  of Buy: playBuy(game)
+  of Cleanup: playCleanup(game)
 
 proc playRemodel(game: Game) =
   let rtrash = game.inout.choose_one("select a card to trash", game.active.hand.mapit(Choice, ($it, true)))
   case rtrash.kind:
+  of One:
+    let ctrash = game.active.hand.move_one(game.board.trash, rtrash.index)
+    game.inout.output("trashed " & $ctrash)
+    let rgain = game.inout.choose_one("select a pile to gain", game.board.piles.mapit(Choice, ($it.sample, not it.isEmpty and it.sample.cost(game) <= ctrash.cost(game) + 2)))
+    case rgain.kind:
     of One:
-      let ctrash = game.active.hand.move_one(game.board.trash, rtrash.index)
-      game.inout.output("trashed " & $ctrash)
-      let rgain = game.inout.choose_one("select a pile to gain", game.board.piles.mapit(Choice, ($it.sample, not it.isEmpty and it.sample.cost(game) <= ctrash.cost(game) + 2)))
-      case rgain.kind:
-        of One:
-          let cgain = game.board.piles[rgain.index].move_one(game.active.discarded)
-          game.inout.output("gained " & $cgain)
-        of Unselectable:
-          game.inout.output("no pile available to gain")
-        else: discard
+      let cgain = game.board.piles[rgain.index].move_one(game.active.discarded)
+      game.inout.output("gained " & $cgain)
     of Unselectable:
-      game.inout.output("no card in hand to trash")
+      game.inout.output("no pile available to gain")
     else: discard
+  of Unselectable:
+    game.inout.output("no card in hand to trash")
+  else: discard
 
-proc newRemodel: Card = ActionCard(FName: "Remodel", FBaseCost: 4, FPlay: playRemodel)
+proc newRemodel(): Card = ActionCard(FName: "Remodel", FBaseCost: 4, FPlay: playRemodel)
 
 proc playSmithy(game: Game) =
-  discard game.active.drawCards(3)
+  game.active.drawCards(3)
   
-proc newSmithy: Card = ActionCard(FName: "Smithy", FBaseCost: 4, FPlay: playSmithy)
+proc newSmithy(): Card = ActionCard(FName: "Smithy", FBaseCost: 4, FPlay: playSmithy)
 
-proc newGame(names: openArray[string]): Game =
+proc playThroneRoom(game: Game) =
+  let r = game.inout.choose_one("select an action card to play twice", game.active.hand.mapit(Choice, ($it, it.isActionable)))
+  case r.kind:
+  of One:
+    let card = game.active.hand.move_one(game.active.played, r.index)
+    game.inout.output("playing " & $card & " first time")
+    card.play(game)
+    game.inout.output("playing " & $card & " second time")
+    card.play(game)
+  of Unselectable:
+    game.inout.output("no action card available to play")
+  else: discard
+
+proc newThroneRoom(): Card = ActionCard(FName: "Throne Room", FBaseCost: 4, FPlay: playThroneRoom)
+
+proc newGame(names: openArray[string], inout: InputOutput): Game =
   new(result)
+  result.inout = inout
   result.players = names.map(newPlayer)
   result.active_player_index = random(result.players.len)
   result.stage = Action
-  result.board = Board(trash: @[], piles: @[newPile(newCopper, 60), newPile(newEstate, 12), newPile(newRemodel, 10), newPile(newSmithy, 10)])
-  result.active.actions = 1
-  result.active.buys = 1
+  result.board = Board(trash: @[], piles: @[newPile(newCopper, 60), newPile(newEstate, 12), newPile(newRemodel, 10), newPile(newSmithy, 10), newPile(newThroneRoom, 10)])
+  result.active.activate
 
-randomize()
+when isMainModule:
+  randomize()
 
-let game = newGame(["wes", "bec"])
-game.inout = RealInputOutput()
-#echo(game.repr)
+  block: # pile push and pop
+    let pile = newPile(newCopper, 8)
+    assert pile.isempty == false
+    for i in 1..5:
+      discard pile.pop
+      assert pile.size == 8 - i
+    for i in 1..3:
+      pile.push(newCopper())
+      assert pile.size == 3 + i
+    for i in 1..6:
+      discard pile.pop
+      assert pile.size == 6 - i
+    assert pile.isempty
+    for i in 1..2:
+      pile.push(newCopper())
+      assert pile.size == i
+    assert pile.isempty == false
+
+  block: # pile should pop different cards
+    let pile = newPile(newCopper, 2)
+    let card1 = pile.pop
+    let card2 = pile.pop
+    assert card1 != pile.sample
+    assert card1 != card2
+
+  block: # pile should pop the same card as pushed
+    let pile = newPile(newCopper, 2)
+    let card1 = newCopper()
+    pile.push(card1)
+    let card2 = pile.pop
+    assert card1 == card2
+
+  block: # game init
+    let game = newGame(["wes", "bec"], FakeInputOutput())
+    assert game.players.len == 2
+    assert game.players.mapit(string, it.name) == @["wes", "bec"]
