@@ -85,7 +85,7 @@ proc `$`(card: Card): string = card.FName
 method play(card: Card, game: Game) = discard
 method play(card: ActionCard, game: Game) = card.FPlay(game)
 method play(card: TreasureCard, game: Game) = game.active.coins += card.FCoins
-method play(card: Hybrid, game: Game) = echo("playing " & $card)
+method play(card: Hybrid, game: Game) = echo("playing ", card)
 
 method cost(card: Card, game: Game): int = card.FBaseCost
 method cost(card: Hybrid, game: Game): int = 99
@@ -106,12 +106,19 @@ method isVictoriable(card: VictoryCard): bool = true
 method isVictoriable(card: Hybrid): bool = true
 
 proc newCopper(): Card = TreasureCard(FName: "Copper", FBaseCost: 0, FCoins: 1)
+proc newSilver(): Card = TreasureCard(FName: "Silver", FBaseCost: 3, FCoins: 2)
+proc newGold(): Card = TreasureCard(FName: "Gold", FBaseCost: 6, FCoins: 3)
+
 proc newEstate(): Card = VictoryCard(FName: "Estate", FBaseCost: 2, FVps: 1)
+proc newDuchy(): Card = VictoryCard(FName: "Duchy", FBaseCost: 5, FVps: 3)
+proc newProvince(): Card = VictoryCard(FName: "Province", FBaseCost: 8, FVps: 6)
 
 proc shuffle[T](x: var seq[T]) =
   for i in countdown(x.high, 0):
     let j = random(i + 1)
     swap(x[i], x[j])
+
+proc clear[T](x: var seq[T]) = x.setlen(0)
 
 proc cycle(x, cap: int): int =
   let y = x + 1
@@ -174,7 +181,7 @@ proc moveOne(pile: Pile, dst: var seq[Card]): Card =
 proc moveMany(src, dst: var seq[Card], indexes: seq[int]): seq[Card] =
   result = indexes.mapit(Card, src[it])
   if result.len == src.len:
-    src.setlen(0)
+    src.clear
   else:
     var ix = indexes
     ix.sort(system.cmp[int], SortOrder.Descending)
@@ -184,12 +191,13 @@ proc moveMany(src, dst: var seq[Card], indexes: seq[int]): seq[Card] =
 
 proc moveAll(src, dst: var seq[Card]): seq[Card] {.discardable.} =
   result = src
-  src.setlen(0)
+  src.clear
   dst.add(result)
 
 proc drawCardsNoRecycle(player: Player, n: int): seq[Card] =
-  let first = player.deck.len - n
-  let last = player.deck.len - 1
+  let
+    first = player.deck.len - n
+    last = player.deck.len - 1
   result = player.deck[first..last]
   result.reverse
   sequtils.delete(player.deck, first, last)
@@ -198,7 +206,7 @@ proc drawCardsNoRecycle(player: Player, n: int): seq[Card] =
 proc drawCardsFullDeck(player: Player): seq[Card] =
   result = player.deck
   result.reverse
-  player.deck.setlen(0)
+  player.deck.clear
   player.hand.add(result)
 
 proc drawCards(player: Player, n: int): seq[Card] {.discardable.} =
@@ -209,7 +217,7 @@ proc drawCards(player: Player, n: int): seq[Card] {.discardable.} =
 
   while cards.len < n and player.discarded.len > 0:
     player.deck.add(player.discarded)
-    player.discarded.setlen(0)
+    player.discarded.clear
     player.deck.shuffle
 
     let remaining = n - cards.len
@@ -329,7 +337,7 @@ proc playBuy(game: Game) =
     of One:
       let card = game.board.piles[r.index].move_one(game.active.discarded)
       game.inout.output("bought " & $card)
-      game.active.actions -= card.cost(game)
+      game.active.coins -= card.cost(game)
       game.active.buys -= 1
     of Skip, Unselectable:
       game.inout.output("skip to cleanup stage")
@@ -422,20 +430,130 @@ when isMainModule:
     assert pile.isempty == false
 
   block: # pile should pop different cards
-    let pile = newPile(newCopper, 2)
-    let card1 = pile.pop
-    let card2 = pile.pop
+    let
+      pile = newPile(newCopper, 2)
+      card1 = pile.pop
+      card2 = pile.pop
     assert card1 != pile.sample
     assert card1 != card2
 
   block: # pile should pop the same card as pushed
-    let pile = newPile(newCopper, 2)
-    let card1 = newCopper()
+    let
+      pile = newPile(newCopper, 2)
+      card1 = newCopper()
     pile.push(card1)
     let card2 = pile.pop
     assert card1 == card2
 
   block: # game init
-    let game = newGame(["wes", "bec"], FakeInputOutput())
+    let
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[])
+      game = newGame(["wes", "bec"], inout)
     assert game.players.len == 2
     assert game.players.mapit(string, it.name) == @["wes", "bec"]
+
+    for p in game.players:
+      assert p.deck.len == 5
+      assert p.hand.len == 5
+      assert p.played.len == 0
+      assert p.discarded.len == 0
+
+      var fulldeck: seq[Card] = @[]
+      fulldeck.add(p.deck)
+      fulldeck.add(p.hand)
+      assert fulldeck.filterit($it == "Copper").len == 7
+      assert fulldeck.filterit($it == "Estate").len == 3
+
+      assert p.hand.any(it.isActionable) == false
+
+      if p == game.active:
+        assert p.actions == 1
+        assert p.buys == 1
+      else:
+        assert p.actions == 0
+        assert p.buys == 0
+      assert p.coins == 0
+
+      assert game.board.trash.len == 0
+      assert game.stage == Action
+
+  block: # first play should skip to treasure
+    let
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[])
+      game = newGame(["wes", "bec"], inout)
+    game.play
+    assert game.stage == Treasure
+    assert inout.outbuf == @["skip to treasure stage"]
+
+  block: # skip to treasure if no action points
+    let
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[])
+      game = newGame(["wes", "bec"], inout)
+    game.active.actions = 0
+    game.play
+    assert game.stage == Treasure
+
+  block: # playing treasure cards
+    let
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[])
+      game = newGame(["wes", "bec"], inout)
+    game.stage = Treasure
+    game.active.hand.clear
+    let hand = [newCopper(), newEstate(), newGold(), newEstate(), newSilver()]
+    game.active.hand.add(hand)
+    inout.inbuf.add("0, 2, 4")
+
+    assert game.active.coins == 0
+    assert game.active.played.len == 0
+
+    game.play
+
+    assert game.active.coins == 6
+    assert game.active.played == @[hand[0], hand[2], hand[4]]
+    assert game.active.hand == @[hand[1], hand[3]]
+    assert game.stage == Treasure
+
+  block: # skip to buy if no treasure cards
+    let
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[])
+      game = newGame(["wes", "bec"], inout)
+    game.stage = Treasure
+    game.active.hand.clear
+    game.active.hand.add([newEstate(), newDuchy(), newProvince()])
+    game.play
+    assert game.stage == Buy
+
+  block: # buy
+    let
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[])
+      game = newGame(["wes", "bec"], inout)
+    game.stage = Buy
+    game.board.piles.clear
+    game.board.piles.add([newPile(newCopper, 10), newPile(newEstate, 8), newPile(newProvince, 8),
+                          newPile(newThroneRoom, 10), newPile(newRemodel, 10)])
+    game.active.hand.clear
+    game.active.coins = 5
+    inout.inbuf.add("4")
+
+    assert game.active.buys == 1
+    assert game.active.played.len == 0
+
+    game.play
+
+    assert game.active.discarded.mapit(string, $it) == @["Remodel"]
+    assert game.active.coins == 1
+    assert game.active.buys == 0
+    assert game.board.piles.filterit($it.sample == "Remodel")[0].size == 9
+    assert game.stage == Buy
+    assert "bought Remodel" in inout.outbuf
+
+  block: # skip to cleanup if no buy points
+    let
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[])
+      game = newGame(["wes", "bec"], inout)
+    game.stage = Buy
+    game.active.buys = 0
+    game.play
+    assert game.stage == Cleanup
+
+  echo("All tests passed")

@@ -189,5 +189,8 @@ public class GameTest {
     assertThat(game.getActivePlayer().getDiscard().get(0) instanceof ThroneRoom, is(true));
     assertThat(game.getBoard().getTrash(), is(Arrays.asList(hand.get(3))));
     assertThat(game.getBoard().getPile(p -> p.getSample() instanceof ThroneRoom).size(), is(3));
+    assertThat(game.getActivePlayer().getActions(), is(0));
+    assertThat(game.getStage(), is(Stage.ACTION));
+
   }
 }
