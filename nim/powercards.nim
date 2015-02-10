@@ -450,33 +450,103 @@ when isMainModule:
     assert card1 == card2
 
   block: # draw cards
-    let
-      player = newPlayer("wes")
-      cards = @[newCopper(), newSilver(), newGold(), newEstate()]
-    player.deck.replace([cards[0], cards[1], cards[2]])
-    player.hand.replace([cards[3]])
+    let cards = [newCopper(), newSilver(), newGold(), newEstate(), newDuchy(), newProvince()]
 
-    let result = player.drawcards(2)
+    block: # simple
+      let player = newPlayer("wes")
+      player.deck.replace([cards[0], cards[1], cards[2]])
+      player.hand.replace([cards[3]])
 
-    assert result == @[cards[2], cards[1]]
-    assert player.deck == @[cards[0]]
-    assert player.hand == @[cards[3], cards[2], cards[1]]
+      let result = player.drawcards(2)
 
-  block: # draw cards when deck is empty
-    let
-      player = newPlayer("wes")
-      cards = @[newCopper(), newSilver(), newGold()]
-    player.deck.clear
-    player.hand.replace([cards[0], cards[1]])
-    player.discarded.replace([cards[2]])
+      assert result == @[cards[2], cards[1]]
+      assert player.deck == @[cards[0]]
+      assert player.hand == @[cards[3], cards[2], cards[1]]
 
-    let result = player.drawcards(1)
+    block: # when deck is empty
+      let player = newPlayer("wes")
+      player.deck.clear
+      player.hand.replace([cards[0], cards[1]])
+      player.discarded.replace([cards[2]])
 
-    assert result == @[cards[2]]
-    assert player.deck.len == 0
-    assert player.hand == @[cards[0], cards[1], cards[2]]
-    assert player.discarded.len == 0
+      let result = player.drawcards(1)
 
+      assert result == @[cards[2]]
+      assert player.deck.len == 0
+      assert player.hand == @[cards[0], cards[1], cards[2]]
+      assert player.discarded.len == 0
+
+    block: # full deck
+      let player = newPlayer("wes")
+      player.deck.replace([cards[0], cards[1], cards[2], cards[3]])
+      player.hand.clear
+      player.discarded.replace([cards[4], cards[5]])
+
+      let result = player.drawcards(4)
+
+      assert result == @[cards[3], cards[2], cards[1], cards[0]]
+      assert player.deck.len == 0
+      assert player.hand == @[cards[3], cards[2], cards[1], cards[0]]
+      assert player.discarded == @[cards[4], cards[5]]
+
+    block: # recycle
+      let player = newPlayer("wes")
+      player.deck.replace([cards[0], cards[1], cards[2]])
+      player.hand.replace([cards[3]])
+      player.discarded.replace([cards[4], cards[5]])
+
+      let result = player.drawcards(4)
+
+      assert result.len == 4
+
+      if result[3] == cards[4]:
+        assert result == @[cards[2], cards[1], cards[0], cards[4]]
+        assert player.deck == @[cards[5]]
+        assert player.hand == @[cards[3], cards[2], cards[1], cards[0], cards[4]]
+      else:
+        assert result == @[cards[2], cards[1], cards[0], cards[5]]
+        assert player.deck == @[cards[4]]
+        assert player.hand == @[cards[3], cards[2], cards[1], cards[0], cards[5]]
+      assert player.discarded.len == 0
+        
+    block: # draw all and recycle
+      let player = newPlayer("wes")
+      player.deck.replace([cards[0], cards[1], cards[2]])
+      player.hand.replace([cards[3]])
+      player.discarded.replace([cards[4], cards[5]])
+
+      let result = player.drawcards(5)
+
+      assert result.len == 5
+
+      if result[4] == cards[4]:
+        assert result == @[cards[2], cards[1], cards[0], cards[5], cards[4]]
+        assert player.hand == @[cards[3], cards[2], cards[1], cards[0], cards[5], cards[4]]
+      else:
+        assert result == @[cards[2], cards[1], cards[0], cards[4], cards[5]]
+        assert player.hand == @[cards[3], cards[2], cards[1], cards[0], cards[4], cards[5]]
+      assert player.deck.len == 0
+      assert player.discarded.len == 0
+        
+    block: # draw stops when no more
+      let player = newPlayer("wes")
+      player.deck.replace([cards[0], cards[1]])
+      player.hand.replace([cards[2], cards[3]])
+      player.discarded.replace([cards[4], cards[5]])
+
+      let result = player.drawcards(5)
+
+      assert result.len == 4
+
+      if result[3] == cards[4]:
+        assert result == @[cards[1], cards[0], cards[5], cards[4]]
+        assert player.hand == @[cards[2], cards[3], cards[1], cards[0], cards[5], cards[4]]
+      else:
+        assert result == @[cards[1], cards[0], cards[4], cards[5]]
+        assert player.hand == @[cards[2], cards[3], cards[1], cards[0], cards[4], cards[5]]
+      assert player.deck.len == 0
+      assert player.discarded.len == 0
+        
   block: # game init
     let
       inout = FakeInputOutput(inbuf: @[], outbuf: @[])
