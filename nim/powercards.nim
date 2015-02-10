@@ -120,6 +120,10 @@ proc shuffle[T](x: var seq[T]) =
 
 proc clear[T](x: var seq[T]) = x.setlen(0)
 
+proc replace[T](x: var seq[T], y: openarray[T]) =
+  x.clear
+  x.add(y)
+
 proc cycle(x, cap: int): int =
   let y = x + 1
   return if y >= cap: 0 else: y
@@ -230,11 +234,11 @@ proc drawCards(player: Player, n: int): seq[Card] {.discardable.} =
   return cards
 
 method output(inout: InputOutput, message: string) = discard
-method output(inout: FakeInputOutput, message: string) = inout.outBuf.add(message)
+method output(inout: FakeInputOutput, message: string) = inout.outbuf.add(message)
 method output(inout: RealInputOutput, message: string) = echo(message)
 
 method input(inout: InputOutput): string = nil
-method input(inout: FakeInputOutput): string = inout.inBuf.pop
+method input(inout: FakeInputOutput): string = inout.inbuf.pop
 method input(inout: RealInputOutput): string = stdin.readline
 
 proc outputChoices(inout: InputOutput, choices: seq[Choice]) =
@@ -445,6 +449,34 @@ when isMainModule:
     let card2 = pile.pop
     assert card1 == card2
 
+  block: # draw cards
+    let
+      player = newPlayer("wes")
+      cards = @[newCopper(), newSilver(), newGold(), newEstate()]
+    player.deck.replace([cards[0], cards[1], cards[2]])
+    player.hand.replace([cards[3]])
+
+    let result = player.drawcards(2)
+
+    assert result == @[cards[2], cards[1]]
+    assert player.deck == @[cards[0]]
+    assert player.hand == @[cards[3], cards[2], cards[1]]
+
+  block: # draw cards when deck is empty
+    let
+      player = newPlayer("wes")
+      cards = @[newCopper(), newSilver(), newGold()]
+    player.deck.clear
+    player.hand.replace([cards[0], cards[1]])
+    player.discarded.replace([cards[2]])
+
+    let result = player.drawcards(1)
+
+    assert result == @[cards[2]]
+    assert player.deck.len == 0
+    assert player.hand == @[cards[0], cards[1], cards[2]]
+    assert player.discarded.len == 0
+
   block: # game init
     let
       inout = FakeInputOutput(inbuf: @[], outbuf: @[])
@@ -493,14 +525,33 @@ when isMainModule:
     game.play
     assert game.stage == Treasure
 
+  block: # playing action cards
+    let
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[])
+      game = newGame(["wes", "bec"], inout)
+      actionCard: Card = ActionCard(FName: "Dummy", FBaseCost: 4, FPlay: proc (game: Game) = game.inout.output("i am dummy"))
+      hand = [newCopper(), newEstate(), actionCard, newEstate(), newSilver()]
+    game.active.hand.replace(hand)
+    inout.inbuf.add("2")
+
+    assert game.active.actions == 1
+    assert game.active.played.len == 0
+
+    game.play
+
+    assert game.active.actions == 0
+    assert game.active.played == @[actionCard]
+    assert game.active.hand == @[hand[0], hand[1], hand[3], hand[4]]
+    assert game.stage == Action
+    assert "i am dummy" in inout.outbuf
+
   block: # playing treasure cards
     let
       inout = FakeInputOutput(inbuf: @[], outbuf: @[])
       game = newGame(["wes", "bec"], inout)
+      hand = [newCopper(), newEstate(), newGold(), newEstate(), newSilver()]      
     game.stage = Treasure
-    game.active.hand.clear
-    let hand = [newCopper(), newEstate(), newGold(), newEstate(), newSilver()]
-    game.active.hand.add(hand)
+    game.active.hand.replace(hand)
     inout.inbuf.add("0, 2, 4")
 
     assert game.active.coins == 0
@@ -518,8 +569,7 @@ when isMainModule:
       inout = FakeInputOutput(inbuf: @[], outbuf: @[])
       game = newGame(["wes", "bec"], inout)
     game.stage = Treasure
-    game.active.hand.clear
-    game.active.hand.add([newEstate(), newDuchy(), newProvince()])
+    game.active.hand.replace([newEstate(), newDuchy(), newProvince()])
     game.play
     assert game.stage == Buy
 
@@ -528,8 +578,7 @@ when isMainModule:
       inout = FakeInputOutput(inbuf: @[], outbuf: @[])
       game = newGame(["wes", "bec"], inout)
     game.stage = Buy
-    game.board.piles.clear
-    game.board.piles.add([newPile(newCopper, 10), newPile(newEstate, 8), newPile(newProvince, 8),
+    game.board.piles.replace([newPile(newCopper, 10), newPile(newEstate, 8), newPile(newProvince, 8),
                           newPile(newThroneRoom, 10), newPile(newRemodel, 10)])
     game.active.hand.clear
     game.active.coins = 5
