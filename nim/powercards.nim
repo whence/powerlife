@@ -119,6 +119,13 @@ proc shuffle[T](x: var seq[T]) =
     let j = random(i + 1)
     swap(x[i], x[j])
 
+proc randomPairs(m: int): seq[tuple[a: int, b: int]] =
+  newseq(result, m)
+  for a in 0 .. m-1:
+    let i = m - 1 - a
+    let j = random(i + 1)
+    result[a] = (i, j)
+
 proc clear[T](x: var seq[T]) = x.setlen(0)
 
 proc replace[T](x: var seq[T], y: openarray[T]) =
@@ -555,7 +562,7 @@ when isMainModule:
         
   block: # game init
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[@[(0, 4), (2, 3)], @[(1, 2), (3, 0)]])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
       game = newGame(["wes", "bec"], inout)
     assert game.players.len == 2
     assert game.players.mapit(string, it.name) == @["wes", "bec"]
@@ -587,7 +594,7 @@ when isMainModule:
 
   block: # first play should skip to treasure
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[@[(0, 4), (2, 3)], @[(1, 2), (3, 0)]])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
       game = newGame(["wes", "bec"], inout)
     game.play
     assert game.stage == Treasure
@@ -595,7 +602,7 @@ when isMainModule:
 
   block: # skip to treasure if no action points
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[@[(0, 4), (2, 3)], @[(1, 2), (3, 0)]])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
       game = newGame(["wes", "bec"], inout)
     game.active.actions = 0
     game.play
@@ -603,7 +610,7 @@ when isMainModule:
 
   block: # playing action cards
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[@[(0, 4), (2, 3)], @[(1, 2), (3, 0)]])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
       game = newGame(["wes", "bec"], inout)
       actionCard: Card = ActionCard(FName: "Dummy", FBaseCost: 4, FPlay: proc (game: Game) = game.inout.output("i am dummy"))
       hand = [newCopper(), newEstate(), actionCard, newEstate(), newSilver()]
@@ -623,7 +630,7 @@ when isMainModule:
 
   block: # playing treasure cards
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[@[(0, 4), (2, 3)], @[(1, 2), (3, 0)]])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
       game = newGame(["wes", "bec"], inout)
       hand = [newCopper(), newEstate(), newGold(), newEstate(), newSilver()]      
     game.stage = Treasure
@@ -642,7 +649,7 @@ when isMainModule:
 
   block: # skip to buy if no treasure cards
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[@[(0, 4), (2, 3)], @[(1, 2), (3, 0)]])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
       game = newGame(["wes", "bec"], inout)
     game.stage = Treasure
     game.active.hand.replace([newEstate(), newDuchy(), newProvince()])
@@ -651,11 +658,10 @@ when isMainModule:
 
   block: # buy
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[@[(0, 4), (2, 3)], @[(1, 2), (3, 0)]])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
       game = newGame(["wes", "bec"], inout)
     game.stage = Buy
-    game.board.piles.replace([newPile(newCopper, 10), newPile(newEstate, 8), newPile(newProvince, 8),
-                          newPile(newThroneRoom, 10), newPile(newRemodel, 10)])
+    game.board.piles.replace([newPile(newCopper, 10), newPile(newEstate, 8), newPile(newProvince, 8), newPile(newThroneRoom, 10), newPile(newRemodel, 10)])
     game.active.hand.clear
     game.active.coins = 5
     inout.inbuf.add("4")
@@ -674,11 +680,53 @@ when isMainModule:
 
   block: # skip to cleanup if no buy points
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[@[(0, 4), (2, 3)], @[(1, 2), (3, 0)]])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
       game = newGame(["wes", "bec"], inout)
     game.stage = Buy
     game.active.buys = 0
     game.play
     assert game.stage == Cleanup
+
+  block: # play remodel
+    let
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
+      game = newGame(["wes", "bec"], inout)
+      hand = [newEstate(), newRemodel(), newCopper(), newEstate(), newCopper()]
+    game.board.piles.replace([newPile(newCopper, 10), newPile(newEstate, 8), newPile(newThroneRoom, 4)])
+    game.active.hand.replace(hand)
+    inout.inbuf.add(["2", "2", "1"])
+
+    game.play
+
+    assert game.active.played == @[hand[1]]
+    assert game.active.hand == @[hand[0], hand[2], hand[4]]
+    assert game.active.discarded.mapit(string, $it) == @["Throne Room"]
+    assert game.board.trash == @[hand[3]]
+    assert game.board.piles.filterit($it.sample == "Throne Room")[0].size == 3
+    assert game.active.actions == 0
+    assert "trashed Estate" in inout.outbuf
+    assert "gained Throne Room" in inout.outbuf
+
+  block: # throneroom throneroom smithy
+    let
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
+      game = newGame(["wes", "bec"], inout)
+      treasures = [newCopper(), newSilver(), newGold()]
+    game.board.piles.clear
+    game.active.hand.replace([newSmithy(), newThroneRoom(), newSmithy(), newThroneRoom(), newCopper()])
+    game.active.deck.clear
+    for i in 1..4:
+      game.active.deck.add(treasures)
+    inout.inbuf.add(["all", "0", "1", "2", "1"])
+
+    game.play # play actions
+    game.play # skip to treasure
+    game.play # play treasures
+
+    assert inout.inbuf.len == 0
+    assert game.active.hand.len == 0
+    assert game.active.actions == 0
+    assert game.active.coins == 25
+    assert game.stage == Treasure
 
   echo("All tests passed")
