@@ -1,7 +1,8 @@
-import math
 import sequtils
+import math
 import algorithm
 from strutils import nil
+import utils
 
 type
   Game = ref object
@@ -113,36 +114,6 @@ proc newGold(): Card = TreasureCard(FName: "Gold", FBaseCost: 6, FCoins: 3)
 proc newEstate(): Card = VictoryCard(FName: "Estate", FBaseCost: 2, FVps: 1)
 proc newDuchy(): Card = VictoryCard(FName: "Duchy", FBaseCost: 5, FVps: 3)
 proc newProvince(): Card = VictoryCard(FName: "Province", FBaseCost: 8, FVps: 6)
-
-proc shuffle[T](x: var seq[T]) =
-  for i in countdown(x.high, 0):
-    let j = random(i + 1)
-    swap(x[i], x[j])
-
-proc randomPairs(m: int): seq[tuple[a: int, b: int]] =
-  newseq(result, m)
-  for a in 0 .. m-1:
-    let i = m - 1 - a
-    let j = random(i + 1)
-    result[a] = (i, j)
-
-proc clear[T](x: var seq[T]) = x.setlen(0)
-
-proc replace[T](x: var seq[T], y: openarray[T]) =
-  x.clear
-  x.add(y)
-
-proc cycle(x, cap: int): int =
-  let y = x + 1
-  return if y >= cap: 0 else: y
-
-template any(seq1, pred: expr): expr =
-  var result {.gensym.}: bool = false
-  for it {.inject.} in items(seq1):
-    result = pred
-    if result:
-      break
-  result
 
 method output(inout: InputOutput, message: string) = discard
 method output(inout: FakeInputOutput, message: string) = inout.outbuf.add(message)
@@ -626,7 +597,7 @@ when isMainModule:
     assert game.active.played == @[actionCard]
     assert game.active.hand == @[hand[0], hand[1], hand[3], hand[4]]
     assert game.stage == Action
-    assert "i am dummy" in inout.outbuf
+    assert inout.outbuf.hasinorder(["i am dummy"])
 
   block: # playing treasure cards
     let
@@ -676,7 +647,7 @@ when isMainModule:
     assert game.active.buys == 0
     assert game.board.piles.filterit($it.sample == "Remodel")[0].size == 9
     assert game.stage == Buy
-    assert "bought Remodel" in inout.outbuf
+    assert inout.outbuf.hasinorder(["bought Remodel"])
 
   block: # skip to cleanup if no buy points
     let
@@ -704,8 +675,7 @@ when isMainModule:
     assert game.board.trash == @[hand[3]]
     assert game.board.piles.filterit($it.sample == "Throne Room")[0].size == 3
     assert game.active.actions == 0
-    assert "trashed Estate" in inout.outbuf
-    assert "gained Throne Room" in inout.outbuf
+    assert inout.outbuf.hasinorder(["trashed Estate", "gained Throne Room"])
 
   block: # throneroom throneroom smithy
     let
@@ -728,5 +698,6 @@ when isMainModule:
     assert game.active.actions == 0
     assert game.active.coins == 25
     assert game.stage == Treasure
+    assert inout.outbuf.hasinorder(["playing Throne Room first time", "playing Smithy first time", "playing Smithy second time", "playing Throne Room second time", "playing Smithy first time", "playing Smithy second time"])
 
   echo("All tests passed")
