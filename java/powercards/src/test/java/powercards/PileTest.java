@@ -1,15 +1,12 @@
 package powercards;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 import powercards.cards.Copper;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 
-@RunWith(MockitoJUnitRunner.class)
 public class PileTest {
   @Test
   public void shouldPushAndPop() {

@@ -1,7 +1,12 @@
 package powercards;
 
+import java.util.Arrays;
+
 public class Program {
   public static void main(String[] args){
-    System.out.println("hello world");
+    InputOutput inout = new ConsoleInputOutput();
+    Dialog dialog = new Dialog(inout);
+    Game game = new Game(Arrays.asList("wes", "bec"), dialog);
+    game.play();
   }
 }

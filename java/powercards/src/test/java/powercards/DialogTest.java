@@ -1,34 +1,29 @@
 package powercards;
 
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.OptionalInt;
 
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-@RunWith(MockitoJUnitRunner.class)
 public class DialogTest {
-  @Mock
-  private InputOutput inputOutput;
-
-  @InjectMocks
+  private RecordedInputOutput inout;
   private Dialog dialog;
+
+  @Before
+  public void setUp() {
+    inout = new RecordedInputOutput();
+    dialog = new Dialog(inout);
+  }
 
   @Test
   public void shouldChooseOne() {
-    when(inputOutput.input()).thenReturn("2");
+    inout.getInputQueue().add("2");
     assertThat(dialog.chooseOne("blah", Arrays.asList(
             new Choice("0", false), new Choice("1", true), new Choice("2", true))
     ), is(OptionalInt.of(2)));
@@ -36,7 +31,7 @@ public class DialogTest {
 
   @Test
   public void shouldChooseOptionalOne() {
-    when(inputOutput.input()).thenReturn("1");
+    inout.getInputQueue().add("1");
     assertThat(dialog.chooseOptionalOne("blah", Arrays.asList(
             new Choice("0", true), new Choice("1", true), new Choice("2", false))
     ), is(OptionalInt.of(1)));
@@ -44,7 +39,7 @@ public class DialogTest {
 
   @Test
   public void shouldSkipOptionalOne() {
-    when(inputOutput.input()).thenReturn("skip");
+    inout.getInputQueue().add("skip");
     assertThat(dialog.chooseOptionalOne("blah", Arrays.asList(
             new Choice("0", false), new Choice("1", false), new Choice("2", true))
     ).isPresent(), is(false));
@@ -52,7 +47,7 @@ public class DialogTest {
 
   @Test
   public void shouldChooseUnlimited() {
-    when(inputOutput.input()).thenReturn("1, 2");
+    inout.getInputQueue().add("1, 2");
     Optional<int[]> result = dialog.chooseUnlimited("blah", Arrays.asList(
             new Choice("0", true), new Choice("1", true), new Choice("2", true)));
     assertThat(result.isPresent(), is(true));
@@ -61,7 +56,7 @@ public class DialogTest {
 
   @Test
   public void shouldChooseUnlimitedWithAll() {
-    when(inputOutput.input()).thenReturn("1,2, 0,");
+    inout.getInputQueue().add("1,2, 0,");
     Optional<int[]> result = dialog.chooseUnlimited("blah", Arrays.asList(
             new Choice("0", true), new Choice("1", true), new Choice("2", true)));
     assertThat(result.isPresent(), is(true));
@@ -70,7 +65,7 @@ public class DialogTest {
 
   @Test
   public void shouldChooseUnlimitedWithAllString() {
-    when(inputOutput.input()).thenReturn("all");
+    inout.getInputQueue().add("all");
     Optional<int[]> result = dialog.chooseUnlimited("blah", Arrays.asList(
         new Choice("0", true), new Choice("1", true), new Choice("2", true)));
     assertThat(result.isPresent(), is(true));
@@ -79,7 +74,7 @@ public class DialogTest {
 
   @Test
   public void shouldSkipUnlimited() {
-    when(inputOutput.input()).thenReturn("skip");
+    inout.getInputQueue().add("skip");
     Optional<int[]> result = dialog.chooseUnlimited("blah", Arrays.asList(
             new Choice("0", true), new Choice("1", true), new Choice("2", true)));
     assertThat(result.isPresent(), is(false));
@@ -87,7 +82,7 @@ public class DialogTest {
 
   @Test
   public void shouldSkipUnlimitedWithEmptyString() {
-    when(inputOutput.input()).thenReturn("  ");
+    inout.getInputQueue().add("  ");
     Optional<int[]> result = dialog.chooseUnlimited("blah", Arrays.asList(
         new Choice("0", true), new Choice("1", true), new Choice("2", true)));
     assertThat(result.isPresent(), is(false));
@@ -110,7 +105,6 @@ public class DialogTest {
             new Choice("0", false), new Choice("1", false), new Choice("2", false))
     ).isPresent(), is(false));
 
-    verify(inputOutput, never()).output(anyString());
-    verify(inputOutput, never()).input();
+    assertThat(inout.getOutputBuffer().size(), is(0));
   }
 }

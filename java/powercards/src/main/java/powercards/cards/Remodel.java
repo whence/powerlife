@@ -17,7 +17,7 @@ public class Remodel extends Card implements ActionCard {
     if (iTrash.isPresent()) {
       Card trashedCard = Cards.moveOne(game.getActivePlayer().getHand(), game.getBoard().getTrash(),
           iTrash.getAsInt());
-      game.getInputOutput().output("Trashed " + trashedCard);
+      game.getDialog().inout().output("Trashed " + trashedCard);
 
       OptionalInt iGain = game.getDialog().chooseOne("Select a pile to gain",
           Choices.ofPiles(game.getBoard().getPiles(),
@@ -25,12 +25,12 @@ public class Remodel extends Card implements ActionCard {
       if (iGain.isPresent()) {
         Card gainedCard = Cards.moveOne(game.getBoard().getPiles().get(iGain.getAsInt()),
             game.getActivePlayer().getDiscard());
-        game.getInputOutput().output("Gained " + gainedCard);
+        game.getDialog().inout().output("Gained " + gainedCard);
       } else {
-        game.getInputOutput().output("No pile available to gain");
+        game.getDialog().inout().output("No pile available to gain");
       }
     } else {
-      game.getInputOutput().output("No card in hand to trash");
+      game.getDialog().inout().output("No card in hand to trash");
     }
   }
 }

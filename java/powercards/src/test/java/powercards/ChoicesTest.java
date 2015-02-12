@@ -1,8 +1,6 @@
 package powercards;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 import powercards.cards.Copper;
 import powercards.cards.Estate;
 
@@ -12,7 +10,6 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
-@RunWith(MockitoJUnitRunner.class)
 public class ChoicesTest {
   @Test
   public void shouldConvertCardsToChoices() {

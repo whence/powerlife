@@ -17,9 +17,8 @@ public class Game {
 
   private final Board board;
   private final Dialog dialog;
-  private final InputOutput inputOutput;
 
-  public Game(List<String> playerNames, Dialog dialog, InputOutput inputOutput) {
+  public Game(List<String> playerNames, Dialog dialog) {
     if (playerNames.size() < 2 || playerNames.size() > 4) {
       throw new IllegalArgumentException("there should be only 2-4 players");
     }
@@ -30,7 +29,6 @@ public class Game {
     this.stage = Stage.ACTION;
     this.board = new Board(Arrays.asList(new Pile(Copper::new, 60), new Pile(Estate::new, 12)));
     this.dialog = dialog;
-    this.inputOutput = inputOutput;
 
     getActivePlayer().setActions(1);
     getActivePlayer().setBuys(1);
@@ -60,10 +58,6 @@ public class Game {
     return dialog;
   }
 
-  public InputOutput getInputOutput() {
-    return inputOutput;
-  }
-
   public void play() {
     switch (stage) {
       case ACTION:
@@ -86,7 +80,7 @@ public class Game {
 
   private void playAction() {
     if (getActivePlayer().getActions() == 0) {
-      inputOutput.output("No more actions, skip to treasure stage");
+      dialog.inout().output("No more actions, skip to treasure stage");
       stage = Stage.TREASURE;
     } else {
       OptionalInt iAction = dialog.chooseOptionalOne("Select an action card to play",
@@ -95,10 +89,10 @@ public class Game {
         Card actionCard = Cards.moveOne(getActivePlayer().getHand(), getActivePlayer().getPlayed(),
             iAction.getAsInt());
         getActivePlayer().addActions(-1);
-        inputOutput.output("Playing " + actionCard);
+        dialog.inout().output("Playing " + actionCard);
         ((ActionCard) actionCard).play(this);
       } else {
-        inputOutput.output("Skip to treasure stage");
+        dialog.inout().output("Skip to treasure stage");
         stage = Stage.TREASURE;
       }
     }
@@ -114,14 +108,14 @@ public class Game {
         ((TreasureCard) treasure).play(this);
       }
     } else {
-      inputOutput.output("Skip to buy stage");
+      dialog.inout().output("Skip to buy stage");
       stage = Stage.BUY;
     }
   }
 
   private void playBuy() {
     if (getActivePlayer().getBuys() == 0) {
-      inputOutput.output("No more buys, skip to cleanup stage");
+      dialog.inout().output("No more buys, skip to cleanup stage");
       stage = Stage.CLEANUP;
     } else {
       OptionalInt iBuy = dialog.chooseOptionalOne("Select a pile to buy",
@@ -129,11 +123,11 @@ public class Game {
               p -> !p.isEmpty() && p.getSample().getCost(this) <= getActivePlayer().getCoins()));
       if (iBuy.isPresent()) {
         Card boughtCard = Cards.moveOne(getBoard().getPiles().get(iBuy.getAsInt()), getActivePlayer().getDiscard());
-        inputOutput.output("Bought " + boughtCard);
+        dialog.inout().output("Bought " + boughtCard);
         getActivePlayer().addCoins(-boughtCard.getCost(this));
         getActivePlayer().addBuys(-1);
       } else {
-        inputOutput.output("Skip to cleanup stage");
+        dialog.inout().output("Skip to cleanup stage");
         stage = Stage.CLEANUP;
       }
     }

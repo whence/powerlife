@@ -10,6 +10,10 @@ public class Dialog {
     this.inputOutput = inputOutput;
   }
 
+  public InputOutput inout() {
+    return inputOutput;
+  }
+
   public OptionalInt chooseOne(String message, List<Choice> choices) {
     if (choices.stream().anyMatch(Choice::isSelectable)) {
       while (true) {

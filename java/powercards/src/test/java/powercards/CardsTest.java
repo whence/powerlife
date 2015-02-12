@@ -2,8 +2,6 @@ package powercards;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 import powercards.cards.*;
 
 import java.util.ArrayList;
@@ -14,7 +12,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 
-@RunWith(MockitoJUnitRunner.class)
 public class CardsTest {
   private Card card1;
   private Card card2;
