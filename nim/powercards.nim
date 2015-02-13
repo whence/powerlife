@@ -24,12 +24,13 @@ type
     trash: seq[Card]
     piles: seq[Pile]
 
-  CardFactory = proc (): Card {.locks: 0.}
-  GamePlay = proc (game: Game) {.locks: 0.}
+  CardSupplier = proc (): Card {.locks: 0.}
+  CardsConsumer = proc (cards: var seq[Card]) {.locks: 0.}
+  GameConsumer = proc (game: Game) {.locks: 0.}
 
   Pile = ref object
     sample: Card
-    factory: CardFactory
+    supplier: CardSupplier
     size: int
     buffer: seq[Card]
 
@@ -48,7 +49,7 @@ type
     FBaseCost: int
 
   ActionCard = ref object of CardObj
-    FPlay: GamePlay
+    FPlay: GameConsumer
     
   TreasureCard = ref object of CardObj
     FCoins: int
@@ -67,7 +68,7 @@ type
   FakeInputOutput = ref object of InputOutputObj
     inBuf: seq[string]
     outBuf: seq[string]
-    shuffleBuf: seq[seq[tuple[a: int, b: int]]]
+    shuffleBuf: seq[CardsConsumer]
 
 proc active(game: Game): Player =
   game.players[game.active_player_index]
@@ -125,9 +126,8 @@ method input(inout: RealInputOutput): string = stdin.readline
 
 method shuffle(inout: InputOutput, x: var seq[Card]) = discard
 method shuffle(inout: FakeInputOutput, x: var seq[Card]) =
-  let pairs = inout.shufflebuf.pop
-  for p in pairs:
-    swap(x[p.a], x[p.b])
+  let consumer = inout.shufflebuf.pop
+  consumer(x)
 
 method shuffle(inout: RealInputOutput, x: var seq[Card]) = shuffle(x)
 
@@ -146,11 +146,11 @@ proc newPlayer(name: string): Player =
   result.buys = 0
   result.coins = 0
 
-proc newPile(factory: CardFactory, size: int): Pile =
+proc newPile(supplier: CardSupplier, size: int): Pile =
   new(result)
-  result.factory = factory
+  result.supplier = supplier
   result.size = size
-  result.sample = factory()
+  result.sample = supplier()
   result.buffer = @[]
 
 proc isEmpty(pile: Pile): bool = pile.size <= 0
@@ -163,7 +163,7 @@ proc pop(pile: Pile): Card =
   if pile.buffer.len > 0:
     result = pile.buffer.pop
   else:
-    result = pile.factory()
+    result = pile.supplier()
   pile.size -= 1
     
 proc moveOne(src, dst: var seq[Card], index: int): Card =
@@ -406,6 +406,9 @@ proc newGame(names: openArray[string], inout: InputOutput): Game =
 when isMainModule:
   randomize()
 
+  proc noShuffle(cards: var seq[Card]) = discard
+  proc doShuffle(cards: var seq[Card]) = shuffle(cards)
+
   block: # pile push and pop
     let pile = newPile(newCopper, 8)
     assert pile.isempty == false
@@ -459,15 +462,15 @@ when isMainModule:
     block: # when deck is empty
       let
         player = newPlayer("wes")
-        inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[@[(0, 1)]])
+        inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[noshuffle])
       player.deck.clear
       player.hand.replace([cards[0], cards[1]])
-      player.discarded.replace([cards[2], cards[3]])
+      player.discarded.replace([cards[2]])
 
       let result = player.drawcards(1, inout)
 
       assert result == @[cards[2]]
-      assert player.deck.len == 1
+      assert player.deck.len == 0
       assert player.hand == @[cards[0], cards[1], cards[2]]
       assert player.discarded.len == 0
 
@@ -489,51 +492,51 @@ when isMainModule:
     block: # recycle
       let
         player = newPlayer("wes")
-        inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[@[(0, 1)]])
+        inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[noshuffle])
       player.deck.replace([cards[0], cards[1], cards[2]])
       player.hand.replace([cards[3]])
       player.discarded.replace([cards[4], cards[5]])
 
       let result = player.drawcards(4, inout)
 
-      assert result == @[cards[2], cards[1], cards[0], cards[4]]
-      assert player.deck == @[cards[5]]
-      assert player.hand == @[cards[3], cards[2], cards[1], cards[0], cards[4]]
+      assert result == @[cards[2], cards[1], cards[0], cards[5]]
+      assert player.deck == @[cards[4]]
+      assert player.hand == @[cards[3], cards[2], cards[1], cards[0], cards[5]]
       assert player.discarded.len == 0
         
     block: # draw all and recycle
       let
         player = newPlayer("wes")
-        inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[@[(0, 1)]])
+        inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[noshuffle])
       player.deck.replace([cards[0], cards[1], cards[2]])
       player.hand.replace([cards[3]])
       player.discarded.replace([cards[4], cards[5]])
 
       let result = player.drawcards(5, inout)
 
-      assert result == @[cards[2], cards[1], cards[0], cards[4], cards[5]]
-      assert player.hand == @[cards[3], cards[2], cards[1], cards[0], cards[4], cards[5]]
+      assert result == @[cards[2], cards[1], cards[0], cards[5], cards[4]]
+      assert player.hand == @[cards[3], cards[2], cards[1], cards[0], cards[5], cards[4]]
       assert player.deck.len == 0
       assert player.discarded.len == 0
         
     block: # draw stops when no more
       let
         player = newPlayer("wes")
-        inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[@[(0, 1)]])
+        inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[noshuffle])
       player.deck.replace([cards[0], cards[1]])
       player.hand.replace([cards[2], cards[3]])
       player.discarded.replace([cards[4], cards[5]])
 
       let result = player.drawcards(5, inout)
       
-      assert result == @[cards[1], cards[0], cards[4], cards[5]]
-      assert player.hand == @[cards[2], cards[3], cards[1], cards[0], cards[4], cards[5]]
+      assert result == @[cards[1], cards[0], cards[5], cards[4]]
+      assert player.hand == @[cards[2], cards[3], cards[1], cards[0], cards[5], cards[4]]
       assert player.deck.len == 0
       assert player.discarded.len == 0
         
   block: # game init
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[doshuffle, doshuffle])
       game = newGame(["wes", "bec"], inout)
     assert game.players.len == 2
     assert game.players.mapit(string, it.name) == @["wes", "bec"]
@@ -565,7 +568,7 @@ when isMainModule:
 
   block: # first play should skip to treasure
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[doshuffle, doshuffle])
       game = newGame(["wes", "bec"], inout)
     game.play
     assert game.stage == Treasure
@@ -573,7 +576,7 @@ when isMainModule:
 
   block: # skip to treasure if no action points
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[doshuffle, doshuffle])
       game = newGame(["wes", "bec"], inout)
     game.active.actions = 0
     game.play
@@ -581,7 +584,7 @@ when isMainModule:
 
   block: # playing action cards
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[doshuffle, doshuffle])
       game = newGame(["wes", "bec"], inout)
       actionCard: Card = ActionCard(FName: "Dummy", FBaseCost: 4, FPlay: proc (game: Game) = game.inout.output("i am dummy"))
       hand = [newCopper(), newEstate(), actionCard, newEstate(), newSilver()]
@@ -601,7 +604,7 @@ when isMainModule:
 
   block: # playing treasure cards
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[doshuffle, doshuffle])
       game = newGame(["wes", "bec"], inout)
       hand = [newCopper(), newEstate(), newGold(), newEstate(), newSilver()]      
     game.stage = Treasure
@@ -620,7 +623,7 @@ when isMainModule:
 
   block: # skip to buy if no treasure cards
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[doshuffle, doshuffle])
       game = newGame(["wes", "bec"], inout)
     game.stage = Treasure
     game.active.hand.replace([newEstate(), newDuchy(), newProvince()])
@@ -629,7 +632,7 @@ when isMainModule:
 
   block: # buy
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[doshuffle, doshuffle])
       game = newGame(["wes", "bec"], inout)
     game.stage = Buy
     game.board.piles.replace([newPile(newCopper, 10), newPile(newEstate, 8), newPile(newProvince, 8), newPile(newThroneRoom, 10), newPile(newRemodel, 10)])
@@ -651,7 +654,7 @@ when isMainModule:
 
   block: # skip to cleanup if no buy points
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[doshuffle, doshuffle])
       game = newGame(["wes", "bec"], inout)
     game.stage = Buy
     game.active.buys = 0
@@ -660,7 +663,7 @@ when isMainModule:
 
   block: # play remodel
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[doshuffle, doshuffle])
       game = newGame(["wes", "bec"], inout)
       hand = [newEstate(), newRemodel(), newCopper(), newEstate(), newCopper()]
     game.board.piles.replace([newPile(newCopper, 10), newPile(newEstate, 8), newPile(newThroneRoom, 4)])
@@ -679,7 +682,7 @@ when isMainModule:
 
   block: # throneroom throneroom smithy
     let
-      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[randomPairs(5), randomPairs(5)])
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[doshuffle, doshuffle])
       game = newGame(["wes", "bec"], inout)
       treasures = [newCopper(), newSilver(), newGold()]
     game.board.piles.clear
