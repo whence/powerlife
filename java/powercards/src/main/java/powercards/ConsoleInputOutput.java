@@ -1,6 +1,8 @@
 package powercards;
 
 import java.io.Console;
+import java.util.Collections;
+import java.util.List;
 
 public class ConsoleInputOutput implements InputOutput {
   private Console console;
@@ -17,5 +19,10 @@ public class ConsoleInputOutput implements InputOutput {
   @Override
   public void output(String message) {
     System.out.println(message);
+  }
+
+  @Override
+  public void shuffle(List<Card> cards) {
+    Collections.shuffle(cards);
   }
 }

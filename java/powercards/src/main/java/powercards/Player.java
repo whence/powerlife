@@ -4,7 +4,6 @@ import powercards.cards.Copper;
 import powercards.cards.Estate;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -20,14 +19,14 @@ public class Player {
   private int buys;
   private int coins;
 
-  public Player(String name) {
+  public Player(String name, InputOutput inout) {
     this.name = name;
 
     List<Card> fullDeck = Stream.concat(
         IntStream.range(0, 3).mapToObj(n -> new Estate()),
         IntStream.range(0, 7).mapToObj(n -> new Copper()))
         .collect(Collectors.toList());
-    Collections.shuffle(fullDeck);
+    inout.shuffle(fullDeck);
     deck = new ArrayList<>(fullDeck.subList(0, 5));
     hand = new ArrayList<>(fullDeck.subList(5, 10));
     played = new ArrayList<>();
@@ -91,6 +90,18 @@ public class Player {
 
   public List<Card> getDiscard() {
     return discard;
+  }
+
+  public void activate() {
+    actions = 1;
+    buys = 1;
+    coins = 0;
+  }
+
+  public void deactivate() {
+    actions = 0;
+    buys = 0;
+    coins = 0;
   }
 
   @Override

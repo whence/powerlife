@@ -58,7 +58,7 @@ public class Cards {
     return array;
   }
 
-  public static List<Card> drawCards(Player player, int n) {
+  public static List<Card> drawCards(Player player, int n, InputOutput inout) {
     if (player.getDeck().size() > n) {
       return drawCardsNoRecycle(player, n);
     }
@@ -68,7 +68,7 @@ public class Cards {
     while (cards.size() < n && !player.getDiscard().isEmpty()) {
       player.getDeck().addAll(player.getDiscard());
       player.getDiscard().clear();
-      Collections.shuffle(player.getDeck());
+      inout.shuffle(player.getDeck());
 
       int remaining = n - cards.size();
       if (player.getDeck().size() > remaining) {
@@ -102,5 +102,8 @@ public class Cards {
     player.getHand().addAll(cards);
 
     return cards;
+  }
+
+  public static void doNothing(List<Card> cards) {
   }
 }

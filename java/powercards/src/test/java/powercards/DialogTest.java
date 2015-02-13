@@ -8,8 +8,9 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.OptionalInt;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class DialogTest {
   private RecordedInputOutput inout;
@@ -23,7 +24,7 @@ public class DialogTest {
 
   @Test
   public void shouldChooseOne() {
-    inout.getInputQueue().add("2");
+    inout.queueInputs("2");
     assertThat(dialog.chooseOne("blah", Arrays.asList(
             new Choice("0", false), new Choice("1", true), new Choice("2", true))
     ), is(OptionalInt.of(2)));
@@ -31,7 +32,7 @@ public class DialogTest {
 
   @Test
   public void shouldChooseOptionalOne() {
-    inout.getInputQueue().add("1");
+    inout.queueInputs("1");
     assertThat(dialog.chooseOptionalOne("blah", Arrays.asList(
             new Choice("0", true), new Choice("1", true), new Choice("2", false))
     ), is(OptionalInt.of(1)));
@@ -39,7 +40,7 @@ public class DialogTest {
 
   @Test
   public void shouldSkipOptionalOne() {
-    inout.getInputQueue().add("skip");
+    inout.queueInputs("skip");
     assertThat(dialog.chooseOptionalOne("blah", Arrays.asList(
             new Choice("0", false), new Choice("1", false), new Choice("2", true))
     ).isPresent(), is(false));
@@ -47,7 +48,7 @@ public class DialogTest {
 
   @Test
   public void shouldChooseUnlimited() {
-    inout.getInputQueue().add("1, 2");
+    inout.queueInputs("1, 2");
     Optional<int[]> result = dialog.chooseUnlimited("blah", Arrays.asList(
             new Choice("0", true), new Choice("1", true), new Choice("2", true)));
     assertThat(result.isPresent(), is(true));
@@ -56,7 +57,7 @@ public class DialogTest {
 
   @Test
   public void shouldChooseUnlimitedWithAll() {
-    inout.getInputQueue().add("1,2, 0,");
+    inout.queueInputs("1,2, 0,");
     Optional<int[]> result = dialog.chooseUnlimited("blah", Arrays.asList(
             new Choice("0", true), new Choice("1", true), new Choice("2", true)));
     assertThat(result.isPresent(), is(true));
@@ -65,7 +66,7 @@ public class DialogTest {
 
   @Test
   public void shouldChooseUnlimitedWithAllString() {
-    inout.getInputQueue().add("all");
+    inout.queueInputs("all");
     Optional<int[]> result = dialog.chooseUnlimited("blah", Arrays.asList(
         new Choice("0", true), new Choice("1", true), new Choice("2", true)));
     assertThat(result.isPresent(), is(true));
@@ -74,7 +75,7 @@ public class DialogTest {
 
   @Test
   public void shouldSkipUnlimited() {
-    inout.getInputQueue().add("skip");
+    inout.queueInputs("skip");
     Optional<int[]> result = dialog.chooseUnlimited("blah", Arrays.asList(
             new Choice("0", true), new Choice("1", true), new Choice("2", true)));
     assertThat(result.isPresent(), is(false));
@@ -82,7 +83,7 @@ public class DialogTest {
 
   @Test
   public void shouldSkipUnlimitedWithEmptyString() {
-    inout.getInputQueue().add("  ");
+    inout.queueInputs("  ");
     Optional<int[]> result = dialog.chooseUnlimited("blah", Arrays.asList(
         new Choice("0", true), new Choice("1", true), new Choice("2", true)));
     assertThat(result.isPresent(), is(false));
@@ -105,6 +106,6 @@ public class DialogTest {
             new Choice("0", false), new Choice("1", false), new Choice("2", false))
     ).isPresent(), is(false));
 
-    assertThat(inout.getOutputBuffer().size(), is(0));
+    assertTrue(inout.noOutput());
   }
 }

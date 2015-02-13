@@ -1,6 +1,10 @@
 package powercards.cards;
 
-import powercards.*;
+import powercards.ActionCard;
+import powercards.Card;
+import powercards.Cards;
+import powercards.Choices;
+import powercards.Game;
 
 import java.util.OptionalInt;
 
