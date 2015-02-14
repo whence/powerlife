@@ -1,13 +1,9 @@
 package powercards;
 
 public abstract class Card {
-  public String getName() {
-    return this.getClass().getSimpleName();
-  }
-
   @Override
   public String toString() {
-    return this.getName();
+    return this.getClass().getSimpleName();
   }
 
   public abstract int getCost(Game game);

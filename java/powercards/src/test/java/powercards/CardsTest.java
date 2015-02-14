@@ -14,9 +14,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNot.not;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.junit.Assert.assertThat;
 
 public class CardsTest {
   private Card card1;
@@ -99,29 +99,22 @@ public class CardsTest {
   }
 
   @Test
+  public void shouldMoveAll() {
+    List<Card> source = new ArrayList<>(Arrays.asList(card1, card2, card3, card4));
+    List<Card> target = new ArrayList<>(Arrays.asList(card5));
+
+    Cards.moveAll(source, target);
+
+    assertThat(source.size(), is(0));
+    assertThat(target, is(Arrays.asList(card5, card1, card2, card3, card4)));
+  }
+
+  @Test
   public void shouldInverseIndexes() {
     int[] original = new int[] { 1, 2, 4 };
     int[] result = Cards.inverseIndexes(original, 6);
     assertThat(result, is(new int[] { 0, 3, 5 }));
     assertThat(original, is(new int[] { 1, 2, 4}));
-    assertThat(result == original, is(false));
-  }
-
-  @Test
-  public void shouldSortIndexesAscending() {
-    int[] original = new int[] { 3, 2, 5, 1 };
-    int[] result = Cards.sortIndexes(original, false);
-    assertThat(result, is(new int[] { 1, 2, 3, 5 }));
-    assertThat(original, is(new int[] { 3, 2, 5, 1 }));
-    assertThat(result == original, is(false));
-  }
-
-  @Test
-  public void shouldSortIndexesDescending() {
-    int[] original = new int[] { 1, 2, 5, 3 };
-    int[] result = Cards.sortIndexes(original, true);
-    assertThat(result, is(new int[] { 5, 3, 2, 1 }));
-    assertThat(original, is(new int[] { 1, 2, 5, 3 }));
     assertThat(result == original, is(false));
   }
 

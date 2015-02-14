@@ -1,7 +1,5 @@
 package powercards;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,18 +24,26 @@ public class Cards {
   public static List<Card> moveMany(List<Card> source, List<Card> target, int[] sourceIndexes) {
     List<Card> cards = Arrays.stream(sourceIndexes).mapToObj(source::get).collect(Collectors.toList());
 
+    int[] sourceIndexesSorted = sourceIndexes.clone();
+    Arrays.sort(sourceIndexesSorted);
+
     if (sourceIndexes.length > source.size() / 2) {
-      int[] invSourceIndexes = inverseIndexes(sortIndexes(sourceIndexes, false), source.size());
+      int[] invSourceIndexes = inverseIndexes(sourceIndexesSorted, source.size());
       List<Card> invCards = Arrays.stream(invSourceIndexes).mapToObj(source::get).collect(Collectors.toList());
       source.clear();
       source.addAll(invCards);
     } else {
-      for (int i : sortIndexes(sourceIndexes, true)) {
-        source.remove(i);
+      for (int i = sourceIndexesSorted.length - 1; i >= 0; i--) {
+        source.remove(sourceIndexesSorted[i]);
       }
     }
     target.addAll(cards);
     return cards;
+  }
+
+  public static void moveAll(List<Card> source, List<Card> target) {
+    target.addAll(source);
+    source.clear();
   }
 
   /*
@@ -47,15 +53,6 @@ public class Cards {
    */
   public static int[] inverseIndexes(int[] indexes, int capExclusive) {
     return IntStream.range(0, capExclusive).filter(i -> Arrays.binarySearch(indexes, i) < 0).toArray();
-  }
-
-  public static int[] sortIndexes(int[] original, boolean descending) {
-    int[] array = original.clone();
-    Arrays.sort(array);
-    if (descending) {
-      ArrayUtils.reverse(array);
-    }
-    return array;
   }
 
   public static List<Card> drawCards(Player player, int n, InputOutput inout) {
@@ -104,6 +101,6 @@ public class Cards {
     return cards;
   }
 
-  public static void doNothing(List<Card> cards) {
+  public static void doNothing(@SuppressWarnings("unused") List<Card> cards) {
   }
 }

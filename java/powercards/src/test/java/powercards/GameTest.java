@@ -4,8 +4,11 @@ import org.junit.Before;
 import org.junit.Test;
 import powercards.cards.Copper;
 import powercards.cards.Estate;
+import powercards.cards.Gold;
 import powercards.cards.Province;
 import powercards.cards.Remodel;
+import powercards.cards.Silver;
+import powercards.cards.Smithy;
 import powercards.cards.ThroneRoom;
 
 import java.util.ArrayList;
@@ -17,8 +20,6 @@ import java.util.stream.Collectors;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 public class GameTest {
   private RecordedInputOutput inout;
@@ -75,7 +76,17 @@ public class GameTest {
   @Test
   public void shouldPlayActionCard() {
     game.getActivePlayer().getHand().clear();
-    DummyActionCard actionCard = mock(DummyActionCard.class);
+    TestActionCard actionCard = new TestActionCard() {
+      @Override
+      public void play(Game game) {
+        game.getDialog().inout().output("playing test action card");
+      }
+
+      @Override
+      public int getCost(Game game) {
+        return 0;
+      }
+    };
     List<Card> hand = Arrays.asList(new Copper(), new Estate(), actionCard, new Estate(), new Copper());
     game.getActivePlayer().getHand().addAll(hand);
     inout.queueInputs("2");
@@ -85,13 +96,12 @@ public class GameTest {
 
     game.play();
 
-    verify(actionCard).play(game);
-
     assertThat(game.getActivePlayer().getActions(), is(0));
     assertThat(game.getActivePlayer().getPlayed(), is(Arrays.asList(hand.get(2))));
     assertThat(game.getActivePlayer().getHand(), is(Arrays.asList(
         hand.get(0), hand.get(1), hand.get(3), hand.get(4))));
     assertThat(game.getStage(), is(Stage.ACTION));
+    assertTrue(inout.hasOutputs("playing test action card"));
   }
 
   @Test
@@ -165,6 +175,35 @@ public class GameTest {
   }
 
   @Test
+  public void shouldCleanup() {
+    game.setStage(Stage.CLEANUP);
+    Player oldActive = game.getActivePlayer();
+    oldActive.getHand().clear();
+    oldActive.getHand().add(new Estate());
+    oldActive.getPlayed().clear();
+    oldActive.getPlayed().addAll(Arrays.asList(new Copper(), new Smithy()));
+
+    assertThat(oldActive.getDiscard().size(), is(0));
+
+    game.play();
+
+    Player newActive = game.getActivePlayer();
+
+    assertTrue(oldActive != newActive);
+
+    assertThat(oldActive.getActions(), is(0));
+    assertThat(oldActive.getBuys(), is(0));
+    assertThat(oldActive.getCoins(), is(0));
+    assertThat(oldActive.getPlayed().size(), is(0));
+    assertThat(oldActive.getDiscard().size(), is(3));
+
+    assertThat(newActive.getActions(), is(1));
+    assertThat(newActive.getBuys(), is(1));
+    assertThat(newActive.getCoins(), is(0));
+    assertThat(newActive.getPlayed().size(), is(0));
+  }
+
+  @Test
   public void shouldPlayRemodel() {
     game.getBoard().getPiles().clear();
     game.getBoard().getPiles().addAll(Arrays.asList(
@@ -185,5 +224,32 @@ public class GameTest {
     assertThat(game.getActivePlayer().getDiscard().get(0) instanceof ThroneRoom, is(true));
     assertThat(game.getBoard().getTrash(), is(Arrays.asList(hand.get(3))));
     assertThat(game.getBoard().getPile(p -> p.getSample() instanceof ThroneRoom).size(), is(3));
+  }
+
+  @Test
+  public void shouldThroneRoomThroneRoomSmithy() {
+    game.getBoard().getPiles().clear();
+    game.getActivePlayer().getHand().clear();
+    game.getActivePlayer().getHand().addAll(Arrays.asList(new Smithy(), new ThroneRoom(), new Smithy(),
+        new ThroneRoom(), new Copper()));
+    game.getActivePlayer().getDeck().clear();
+    for (int i = 0; i < 4; i++) {
+      game.getActivePlayer().getDeck().addAll(Arrays.asList(new Copper(), new Silver(), new Gold()));
+    }
+    inout.queueInputs("1", "2", "1", "0", "all");
+
+    game.play(); // play actions
+    game.play(); // skip to treasure
+    game.play(); // play treasures
+
+    assertTrue(inout.hasOutputs("Playing Throne Room first time", "Playing Smithy first time",
+        "Playing Smithy second time", "Playing Throne Room second time", "Playing Smithy first time",
+        "Playing Smithy second time"));
+    assertThat(inout.getInputQueue().size(), is(0));
+
+    assertThat(game.getActivePlayer().getHand().size(), is(0));
+    assertThat(game.getActivePlayer().getActions(), is(0));
+    assertThat(game.getActivePlayer().getCoins(), is(25));
+    assertThat(game.getStage(), is(Stage.TREASURE));
   }
 }

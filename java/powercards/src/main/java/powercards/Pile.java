@@ -29,9 +29,9 @@ public class Pile {
   }
 
   public void push(Card card) {
-    if (!card.getName().equals(sample.getName())) {
+    if (!card.toString().equals(sample.toString())) {
       throw new IllegalArgumentException(String.format("Cannot push %s card into %s pile",
-          card.getName(), sample.getName()));
+          card.toString(), sample.toString()));
     }
     buffer.push(card);
     size += 1;

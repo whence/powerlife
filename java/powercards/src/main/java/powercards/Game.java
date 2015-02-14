@@ -1,6 +1,5 @@
 package powercards;
 
-import org.apache.commons.lang3.RandomUtils;
 import powercards.cards.Copper;
 import powercards.cards.Estate;
 
@@ -8,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 public class Game {
@@ -25,7 +25,8 @@ public class Game {
 
     this.players = playerNames.stream().map(name -> new Player(name, dialog.inout())).collect(Collectors.toList());
 
-    this.activePlayerIndex = RandomUtils.nextInt(0, players.size());
+    Random random = new Random();
+    this.activePlayerIndex = random.nextInt(players.size());
     this.stage = Stage.ACTION;
     this.board = new Board(Arrays.asList(new Pile(Copper::new, 60), new Pile(Estate::new, 12)));
     this.dialog = dialog;
@@ -133,5 +134,18 @@ public class Game {
   }
 
   private void playCleanup() {
+    Cards.moveAll(getActivePlayer().getHand(), getActivePlayer().getDiscard());
+    Cards.moveAll(getActivePlayer().getPlayed(), getActivePlayer().getDiscard());
+    Cards.drawCards(getActivePlayer(), 5, dialog.inout());
+    getActivePlayer().deactivate();
+    nextActivePlayer();
+    getActivePlayer().activate();
+  }
+
+  private void nextActivePlayer() {
+    activePlayerIndex++;
+    if (activePlayerIndex >= players.size()) {
+      activePlayerIndex = 0;
+    }
   }
 }
