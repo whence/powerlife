@@ -662,6 +662,30 @@ when isMainModule:
     game.play
     assert game.stage == Cleanup
 
+  block: # cleanup
+    let
+      inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[doshuffle, doshuffle])
+      game = newGame(["wes", "bec"], inout)
+      oldplayer = game.active
+    game.stage = Cleanup
+    oldplayer.hand.replace([newEstate()])
+    oldplayer.played.replace([newCopper(), newSmithy()])
+    assert oldplayer.discarded.len == 0
+
+    game.play
+    
+    let newplayer = game.active
+    assert oldplayer != newplayer
+    assert oldplayer.actions == 0
+    assert oldplayer.buys == 0
+    assert oldplayer.coins == 0
+    assert oldplayer.played.len == 0
+    assert oldplayer.discarded.len == 3
+    assert newplayer.actions == 1
+    assert newplayer.buys == 1
+    assert newplayer.coins == 0
+    assert newplayer.played.len == 0
+
   block: # play remodel
     let
       inout = FakeInputOutput(inbuf: @[], outbuf: @[], shufflebuf: @[doshuffle, doshuffle])
