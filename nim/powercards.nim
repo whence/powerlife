@@ -186,10 +186,9 @@ proc moveMany(src, dst: var seq[Card], indexes: seq[int]): seq[Card] =
       system.delete(src, i)
   dst.add(result)
 
-proc moveAll(src, dst: var seq[Card]): seq[Card] {.discardable.} =
-  result = src
+proc moveAll(src, dst: var seq[Card]) =
+  dst.add(src)
   src.clear
-  dst.add(result)
 
 proc drawCardsNoRecycle(player: Player, n: int): seq[Card] =
   let
@@ -206,7 +205,7 @@ proc drawCardsFullDeck(player: Player): seq[Card] =
   player.deck.clear
   player.hand.add(result)
 
-proc drawCards(player: Player, n: int, inout: InputOutput): seq[Card] {.discardable.} =
+proc drawCards(player: Player, n: int, inout: InputOutput): seq[Card] =
   if player.deck.len > n:
     return drawCardsNoRecycle(player, n)
 
@@ -289,7 +288,7 @@ proc chooseUnlimited(inout: InputOutput, message: string, choices: seq[Choice]):
 
 proc prepare(player: Player, inout: InputOutput) =
   inout.shuffle(player.deck)
-  player.drawcards(5, inout)
+  discard player.drawcards(5, inout)
 
 proc playAction(game: Game) =
   if game.active.actions == 0:
@@ -340,7 +339,7 @@ proc playBuy(game: Game) =
 proc playCleanup(game: Game) =
   game.active.hand.moveall(game.active.discarded)
   game.active.played.moveall(game.active.discarded)
-  game.active.drawcards(5, game.inout)
+  discard game.active.drawcards(5, game.inout)
   game.active.deactivate
   game.active_player_index = cycle(game.active_player_index, game.players.len)
   game.active.activate
@@ -373,7 +372,7 @@ proc playRemodel(game: Game) =
 proc newRemodel(): Card = ActionCard(FName: "Remodel", FBaseCost: 4, FPlay: playRemodel)
 
 proc playSmithy(game: Game) =
-  game.active.drawCards(3, game.inout)
+  discard game.active.drawCards(3, game.inout)
   
 proc newSmithy(): Card = ActionCard(FName: "Smithy", FBaseCost: 4, FPlay: playSmithy)
 

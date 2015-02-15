@@ -13,8 +13,9 @@ proc replace*[T](x: var seq[T], y: openarray[T]) =
   x.add(y)
 
 proc cycle*(x, cap: int): int =
-  let y = x + 1
-  return if y >= cap: 0 else: y
+  result = x + 1
+  if result >= cap:
+    result = 0
 
 template any*(seq1, pred: expr): expr =
   var result {.gensym.}: bool = false
@@ -34,7 +35,7 @@ proc hasInOrder*[T](stack: openarray[T], hay: openarray[T]): bool =
       inc(ihay)
     inc(istack)
 
-  return ihay > 0 and ihay == hay.len 
+  return ihay > 0 and ihay == hay.len
 
 when isMainModule:
   block: # sorting ints
@@ -52,6 +53,7 @@ when isMainModule:
       assert outs.hasinorder(["wes", "bec"]) == true
       assert outs.hasinorder(["bec", "wes"]) == false
       assert outs.hasinorder(["wes", "Bec"]) == false
+      assert outs.hasinorder([]) == false
     block: # has gap
       let outs = ["x", "wes", "y", "bec", "z"]
       assert outs.hasinorder(["wes", "bec"]) == true
