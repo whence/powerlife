@@ -129,7 +129,7 @@ method shuffle(inout: FakeInputOutput, x: var seq[Card]) =
   let consumer = inout.shufflebuf.pop
   consumer(x)
 
-method shuffle(inout: RealInputOutput, x: var seq[Card]) = shuffle(x)
+method shuffle(inout: RealInputOutput, x: var seq[Card]) = utils.shuffle(x)
 
 proc newPlayer(name: string): Player =
   new(result)
@@ -407,7 +407,9 @@ when isMainModule:
   randomize()
 
   proc noShuffle(cards: var seq[Card]) = discard
-  proc doShuffle(cards: var seq[Card]) = shuffle(cards)
+
+  # use this proc to avoid adding procvar to utils.shuffle just for the sake of testing
+  proc doShuffle(cards: var seq[Card]) = utils.shuffle(cards)
 
   block: # pile push and pop
     let pile = newPile(newCopper, 8)
@@ -704,3 +706,5 @@ when isMainModule:
     assert inout.outbuf.hasinorder(["playing Throne Room first time", "playing Smithy first time", "playing Smithy second time", "playing Throne Room second time", "playing Smithy first time", "playing Smithy second time"])
 
   echo("All tests passed")
+
+
