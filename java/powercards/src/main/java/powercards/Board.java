@@ -2,7 +2,6 @@ package powercards;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 
 public class Board {
   private final List<Pile> piles;
@@ -17,8 +16,8 @@ public class Board {
     return piles;
   }
 
-  public Pile getPile(Predicate<Pile> predicate) {
-    return piles.stream().filter(predicate).findAny().get();
+  public Pile getPile(Class<? extends Card> type) {
+    return piles.stream().filter(p -> type.isInstance(p.getSample())).findAny().get();
   }
 
   public List<Card> getTrash() {

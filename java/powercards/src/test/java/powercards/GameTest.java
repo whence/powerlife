@@ -17,8 +17,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class GameTest {
@@ -35,41 +35,40 @@ public class GameTest {
 
   @Test
   public void shouldInitializeGame() {
-    assertThat(game.getPlayers().size(), is(2));
-    assertThat(game.getPlayers().stream().map(Player::getName).collect(Collectors.toList()),
-        is(Arrays.asList("wes", "bec")));
+    assertEquals(Arrays.asList("wes", "bec"), game.getPlayers().stream().map(Player::getName)
+            .collect(Collectors.toList()));
 
     for (Player player : game.getPlayers()) {
-      assertThat(player.getDeck().size(), is(5));
-      assertThat(player.getHand().size(), is(5));
-      assertThat(player.getPlayed().size(), is(0));
-      assertThat(player.getDiscard().size(), is(0));
+      assertEquals(5, player.getDeck().size());
+      assertEquals(5, player.getHand().size());
+      assertEquals(0, player.getPlayed().size());
+      assertEquals(0, player.getDiscard().size());
 
       List<Card> fullDeck = new ArrayList<>();
       fullDeck.addAll(player.getDeck());
       fullDeck.addAll(player.getHand());
-      assertThat(fullDeck.stream().filter(c -> c instanceof Copper).count(), is(7L));
-      assertThat(fullDeck.stream().filter(c -> c instanceof Estate).count(), is(3L));
-      assertThat(player.getHand().stream().anyMatch(c -> c instanceof ActionCard), is(false));
+      assertEquals(7, fullDeck.stream().filter(c -> c instanceof Copper).count());
+      assertEquals(3, fullDeck.stream().filter(c -> c instanceof Estate).count());
+      assertFalse(player.getHand().stream().anyMatch(c -> c instanceof ActionCard));
 
       if (player == game.getActivePlayer()) {
-        assertThat(player.getActions(), is(1));
-        assertThat(player.getBuys(), is(1));
+        assertEquals(1, player.getActions());
+        assertEquals(1, player.getBuys());
       } else {
-        assertThat(player.getActions(), is(0));
-        assertThat(player.getBuys(), is(0));
+        assertEquals(0, player.getActions());
+        assertEquals(0, player.getBuys());
       }
-      assertThat(player.getCoins(), is(0));
+      assertEquals(0, player.getCoins());
     }
 
-    assertThat(game.getBoard().getTrash().size(), is(0));
-    assertThat(game.getStage(), is(Stage.ACTION));
+    assertEquals(0, game.getBoard().getTrash().size());
+    assertEquals(Stage.ACTION, game.getStage());
   }
 
   @Test
   public void firstPlayShouldSkipToTreasureStage() {
     game.play();
-    assertThat(game.getStage(), is(Stage.TREASURE));
+    assertEquals(Stage.TREASURE, game.getStage());
     assertTrue(inout.hasOutputs("Skip to treasure stage"));
   }
 
@@ -91,25 +90,24 @@ public class GameTest {
     game.getActivePlayer().getHand().addAll(hand);
     inout.queueInputs("2");
 
-    assertThat(game.getActivePlayer().getActions(), is(1));
-    assertThat(game.getActivePlayer().getPlayed().size(), is(0));
+    assertEquals(1, game.getActivePlayer().getActions());
+    assertEquals(0, game.getActivePlayer().getPlayed().size());
 
     game.play();
 
-    assertThat(game.getActivePlayer().getActions(), is(0));
-    assertThat(game.getActivePlayer().getPlayed(), is(Arrays.asList(hand.get(2))));
-    assertThat(game.getActivePlayer().getHand(), is(Arrays.asList(
-        hand.get(0), hand.get(1), hand.get(3), hand.get(4))));
-    assertThat(game.getStage(), is(Stage.ACTION));
+    assertEquals(0, game.getActivePlayer().getActions());
+    assertEquals(Arrays.asList(hand.get(2)), game.getActivePlayer().getPlayed());
+    assertEquals(Arrays.asList(hand.get(0), hand.get(1), hand.get(3), hand.get(4)), game.getActivePlayer().getHand());
+    assertEquals(Stage.ACTION, game.getStage());
     assertTrue(inout.hasOutputs("playing test action card"));
   }
 
   @Test
   public void shouldSkipToTreasureIfNoActions() {
     game.getActivePlayer().setActions(0);
-    assertThat(game.getStage(), is(Stage.ACTION));
+    assertEquals(Stage.ACTION, game.getStage());
     game.play();
-    assertThat(game.getStage(), is(Stage.TREASURE));
+    assertEquals(Stage.TREASURE, game.getStage());
   }
 
   @Test
@@ -120,15 +118,15 @@ public class GameTest {
     game.getActivePlayer().getHand().addAll(hand);
     inout.queueInputs("0, 2, 4");
 
-    assertThat(game.getActivePlayer().getCoins(), is(0));
-    assertThat(game.getActivePlayer().getPlayed().size(), is(0));
+    assertEquals(0, game.getActivePlayer().getCoins());
+    assertEquals(0, game.getActivePlayer().getPlayed().size());
 
     game.play();
 
-    assertThat(game.getActivePlayer().getCoins(), is(3));
-    assertThat(game.getActivePlayer().getPlayed(), is(Arrays.asList(hand.get(0), hand.get(2), hand.get(4))));
-    assertThat(game.getActivePlayer().getHand(), is(Arrays.asList(hand.get(1), hand.get(3))));
-    assertThat(game.getStage(), is(Stage.TREASURE));
+    assertEquals(3, game.getActivePlayer().getCoins());
+    assertEquals(Arrays.asList(hand.get(0), hand.get(2), hand.get(4)), game.getActivePlayer().getPlayed());
+    assertEquals(Arrays.asList(hand.get(1), hand.get(3)), game.getActivePlayer().getHand());
+    assertEquals(Stage.TREASURE, game.getStage());
   }
 
   @Test
@@ -137,7 +135,7 @@ public class GameTest {
     game.getActivePlayer().getHand().clear();
     game.getActivePlayer().getHand().addAll(Arrays.asList(new Estate(), new Province()));
     game.play();
-    assertThat(game.getStage(), is(Stage.BUY));
+    assertEquals(Stage.BUY, game.getStage());
   }
 
   @Test
@@ -151,19 +149,19 @@ public class GameTest {
     game.getActivePlayer().setCoins(5);
     inout.queueInputs("4");
 
-    assertThat(game.getActivePlayer().getBuys(), is(1));
-    assertThat(game.getActivePlayer().getPlayed().size(), is(0));
+    assertEquals(1, game.getActivePlayer().getBuys());
+    assertEquals(0, game.getActivePlayer().getPlayed().size());
 
     game.play();
 
     assertTrue(inout.hasOutputs("Bought Remodel"));
 
-    assertThat(game.getActivePlayer().getDiscard().size(), is(1));
-    assertThat(game.getActivePlayer().getDiscard().get(0) instanceof Remodel, is(true));
-    assertThat(game.getActivePlayer().getCoins(), is(1));
-    assertThat(game.getActivePlayer().getBuys(), is(0));
-    assertThat(game.getBoard().getPile(p -> p.getSample() instanceof Remodel).size(), is(9));
-    assertThat(game.getStage(), is(Stage.BUY));
+    assertEquals(1, game.getActivePlayer().getDiscard().size());
+    assertTrue(game.getActivePlayer().getDiscard().get(0) instanceof Remodel);
+    assertEquals(1, game.getActivePlayer().getCoins());
+    assertEquals(0, game.getActivePlayer().getBuys());
+    assertEquals(9, game.getBoard().getPile(Remodel.class).size());
+    assertEquals(Stage.BUY, game.getStage());
   }
 
   @Test
@@ -171,7 +169,7 @@ public class GameTest {
     game.setStage(Stage.BUY);
     game.getActivePlayer().setBuys(0);
     game.play();
-    assertThat(game.getStage(), is(Stage.CLEANUP));
+    assertEquals(Stage.CLEANUP, game.getStage());
   }
 
   @Test
@@ -183,7 +181,7 @@ public class GameTest {
     oldActive.getPlayed().clear();
     oldActive.getPlayed().addAll(Arrays.asList(new Copper(), new Smithy()));
 
-    assertThat(oldActive.getDiscard().size(), is(0));
+    assertEquals(0, oldActive.getDiscard().size());
 
     game.play();
 
@@ -191,16 +189,16 @@ public class GameTest {
 
     assertTrue(oldActive != newActive);
 
-    assertThat(oldActive.getActions(), is(0));
-    assertThat(oldActive.getBuys(), is(0));
-    assertThat(oldActive.getCoins(), is(0));
-    assertThat(oldActive.getPlayed().size(), is(0));
-    assertThat(oldActive.getDiscard().size(), is(3));
+    assertEquals(0, oldActive.getActions());
+    assertEquals(0, oldActive.getBuys());
+    assertEquals(0, oldActive.getCoins());
+    assertEquals(0, oldActive.getPlayed().size());
+    assertEquals(3, oldActive.getDiscard().size());
 
-    assertThat(newActive.getActions(), is(1));
-    assertThat(newActive.getBuys(), is(1));
-    assertThat(newActive.getCoins(), is(0));
-    assertThat(newActive.getPlayed().size(), is(0));
+    assertEquals(1, newActive.getActions());
+    assertEquals(1, newActive.getBuys());
+    assertEquals(0, newActive.getCoins());
+    assertEquals(0, newActive.getPlayed().size());
   }
 
   @Test
@@ -217,13 +215,12 @@ public class GameTest {
 
     assertTrue(inout.hasOutputs("Trashed Estate", "Gained Throne Room"));
 
-    assertThat(game.getActivePlayer().getPlayed(), is(Arrays.asList(hand.get(1))));
-    assertThat(game.getActivePlayer().getHand(), is(Arrays.asList(
-        hand.get(0), hand.get(2), hand.get(4))));
-    assertThat(game.getActivePlayer().getDiscard().size(), is(1));
-    assertThat(game.getActivePlayer().getDiscard().get(0) instanceof ThroneRoom, is(true));
-    assertThat(game.getBoard().getTrash(), is(Arrays.asList(hand.get(3))));
-    assertThat(game.getBoard().getPile(p -> p.getSample() instanceof ThroneRoom).size(), is(3));
+    assertEquals(Arrays.asList(hand.get(1)), game.getActivePlayer().getPlayed());
+    assertEquals(Arrays.asList(hand.get(0), hand.get(2), hand.get(4)), game.getActivePlayer().getHand());
+    assertEquals(1, game.getActivePlayer().getDiscard().size());
+    assertTrue(game.getActivePlayer().getDiscard().get(0) instanceof ThroneRoom);
+    assertEquals(Arrays.asList(hand.get(3)), game.getBoard().getTrash());
+    assertEquals(3, game.getBoard().getPile(ThroneRoom.class).size());
   }
 
   @Test
@@ -245,11 +242,11 @@ public class GameTest {
     assertTrue(inout.hasOutputs("Playing Throne Room first time", "Playing Smithy first time",
         "Playing Smithy second time", "Playing Throne Room second time", "Playing Smithy first time",
         "Playing Smithy second time"));
-    assertThat(inout.getInputQueue().size(), is(0));
+    assertEquals(0, inout.getInputQueue().size());
 
-    assertThat(game.getActivePlayer().getHand().size(), is(0));
-    assertThat(game.getActivePlayer().getActions(), is(0));
-    assertThat(game.getActivePlayer().getCoins(), is(25));
-    assertThat(game.getStage(), is(Stage.TREASURE));
+    assertEquals(0, game.getActivePlayer().getHand().size());
+    assertEquals(0, game.getActivePlayer().getActions());
+    assertEquals(25, game.getActivePlayer().getCoins());
+    assertEquals(Stage.TREASURE, game.getStage());
   }
 }

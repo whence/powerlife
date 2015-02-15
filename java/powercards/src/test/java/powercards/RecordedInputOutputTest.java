@@ -3,9 +3,8 @@ package powercards;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class RecordedInputOutputTest {
@@ -20,11 +19,10 @@ public class RecordedInputOutputTest {
   public void shouldQueueInputs() {
     inout.queueInputs("1", "2", "3");
 
-    assertThat(inout.input(), is("1"));
-    assertThat(inout.input(), is("2"));
-    assertThat(inout.input(), is("3"));
-
-    assertThat(inout.getInputQueue().size(), is(0));
+    assertEquals("1", inout.input());
+    assertEquals("2", inout.input());
+    assertEquals("3", inout.input());
+    assertEquals(0, inout.getInputQueue().size());
   }
 
   @Test
@@ -36,7 +34,7 @@ public class RecordedInputOutputTest {
     assertFalse(inout.hasOutputs("bec", "wes"));
     assertFalse(inout.hasOutputs("wes", "Bec"));
 
-    assertThat(inout.getOutputBuffer().size(), is(2));
+    assertEquals(2, inout.getOutputBuffer().size());
   }
 
   @Test
@@ -51,7 +49,7 @@ public class RecordedInputOutputTest {
     assertFalse(inout.hasOutputs("bec", "wes"));
     assertFalse(inout.hasOutputs("wes", "bec", "y"));
 
-    assertThat(inout.getOutputBuffer().size(), is(5));
+    assertEquals(5, inout.getOutputBuffer().size());
   }
 
   @Test
@@ -72,6 +70,6 @@ public class RecordedInputOutputTest {
     assertFalse(inout.hasOutputs("wes", "bec", "bec", "wes"));
     assertFalse(inout.hasOutputs("bec", "x", "x"));
 
-    assertThat(inout.getOutputBuffer().size(), is(6));
+    assertEquals(6, inout.getOutputBuffer().size());
   }
 }

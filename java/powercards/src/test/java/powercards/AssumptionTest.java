@@ -9,8 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.OptionalInt;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 
 public class AssumptionTest {
   @Test
@@ -26,49 +26,35 @@ public class AssumptionTest {
     a.add(card2);
     b.add(card1);
     b.add(card2);
-    assertThat(a == b, is(false));
-    assertThat(a.equals(b), is(true));
-    assertThat(a, is(b));
-    assertThat(b, is(a));
+    assertNotSame(a, b);
+    assertEquals(a, b);
 
     List<Card> c = Arrays.asList(card3, card4);
     List<Card> d = Arrays.asList(card3, card4);
-    assertThat(c == d, is(false));
-    assertThat(c.equals(d), is(true));
-    assertThat(c, is(d));
-    assertThat(d, is(c));
+    assertNotSame(c, d);
+    assertEquals(c, d);
 
     List<Card> e = new ArrayList<>();
     e.add(card1);
     e.add(card3);
-    assertThat(e, is(Arrays.asList(card1, card3)));
-    assertThat(Arrays.asList(card1, card3), is(e));
+    List<Card> f = Arrays.asList(card1, card3);
+    assertEquals(e, f);
+    assertEquals(f, e);
   }
 
   @Test
-  public void arrayShouldWorkWithIsOperator() {
-    int[] a = new int[] { 1, 2, 3 };
-    int[] b = new int[] { 1, 2, 3 };
-    assertThat(a == b, is(false));
-    assertThat(a, is(b));
-    assertThat(b, is(a));
+  public void stringShouldWorkWithAssert() {
+    String a = "wes";
+    String b = "WES".toLowerCase();
+    assertNotSame(a, b);
+    assertEquals(a, b);
   }
 
   @Test
-  public void stringShouldWorkWithIsOperator() {
-    String a = new String("wes");
-    String b = new String("wes");
-    assertThat(a == b, is(false));
-    assertThat(a, is(b));
-    assertThat(b, is(a));
-  }
-
-  @Test
-  public void optionalIntShouldWorkWithIsOperator() {
+  public void optionalIntShouldWorkWithAssert() {
     OptionalInt a = OptionalInt.of(1);
     OptionalInt b = OptionalInt.of(1);
-    assertThat(a == b, is(false));
-    assertThat(a, is(b));
-    assertThat(b, is(a));
+    assertNotSame(a, b);
+    assertEquals(a, b);
   }
 }

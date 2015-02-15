@@ -3,47 +3,51 @@ package powercards;
 import org.junit.Test;
 import powercards.cards.Copper;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNotEquals;
 
 public class PileTest {
   @Test
   public void shouldPushAndPop() {
     Pile pile = new Pile(Copper::new, 8);
 
-    assertThat(pile.isEmpty(), is(false));
+    assertEquals(8, pile.size());
+    assertFalse(pile.isEmpty());
 
     for (int i = 1; i <= 5; i++) {
       pile.pop();
-      assertThat(pile.size(), is(8 - i));
+      assertEquals(8 - i, pile.size());
     }
 
     for (int i = 1; i <= 3; i++) {
       pile.push(new Copper());
-      assertThat(pile.size(), is(3 + i));
+      assertEquals(3 + i, pile.size());
     }
 
     for (int i = 1; i <= 6; i++) {
       pile.pop();
-      assertThat(pile.size(), is(6 - i));
+      assertEquals(6 - i, pile.size());
     }
 
-    assertThat(pile.isEmpty(), is(true));
+    assertTrue(pile.isEmpty());
 
     for (int i = 1; i <= 2; i++) {
       pile.push(new Copper());
-      assertThat(pile.size(), is(i));
+      assertEquals(i, pile.size());
     }
 
-    assertThat(pile.isEmpty(), is(false));
+    assertFalse(pile.isEmpty());
   }
 
   @Test(expected = IllegalStateException.class)
   public void shouldThrowIfPopEmptyPile() {
     Pile pile = new Pile(Copper::new, 1);
     pile.pop();
-    assertThat(pile.isEmpty(), is(true));
+    assertTrue(pile.isEmpty());
     pile.pop();
   }
 
@@ -53,9 +57,10 @@ public class PileTest {
     Card card1 = pile.pop();
     Card card2 = pile.pop();
 
-    assertThat(card1, not(pile.getSample()));
-    assertThat(card1, not(card2));
-    assertThat(card1 == card2, is(false));
+    assertNotEquals(card1, pile.getSample());
+    assertNotSame(card1, pile.getSample());
+    assertNotEquals(card1, card2);
+    assertNotSame(card1, card2);
   }
 
   @Test
@@ -64,7 +69,7 @@ public class PileTest {
     Card card1 = new Copper();
     pile.push(card1);
     Card card2 = pile.pop();
-    assertThat(card1, is(card2));
-    assertThat(card1 == card2, is(true));
+    assertEquals(card1, card2);
+    assertSame(card1, card2);
   }
 }

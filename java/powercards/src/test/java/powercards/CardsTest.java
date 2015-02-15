@@ -14,9 +14,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotSame;
 
 public class CardsTest {
   private Card card1;
@@ -40,10 +41,10 @@ public class CardsTest {
 
   @Test
   public void cardsShouldReferenceCompare() {
-    assertThat(card1, not(card3));
-    assertThat(card2, not(card4));
-    assertThat(card1 == card3, is(false));
-    assertThat(card2 == card4, is(false));
+    assertNotEquals(card1, card3);
+    assertNotSame(card1, card3);
+    assertNotEquals(card2, card4);
+    assertNotSame(card2, card4);
   }
 
   @Test
@@ -53,9 +54,9 @@ public class CardsTest {
 
     Card card = Cards.moveOne(source, target, 1);
 
-    assertThat(source, is(Arrays.asList(card1, card3)));
-    assertThat(target, is(Arrays.asList(card4, card2)));
-    assertThat(card, is(card2));
+    assertEquals(Arrays.asList(card1, card3), source);
+    assertEquals(Arrays.asList(card4, card2), target);
+    assertEquals(card2, card);
   }
 
   @Test
@@ -65,9 +66,9 @@ public class CardsTest {
 
     Card card = Cards.moveOne(pile, target);
 
-    assertThat(pile.size(), is(9));
-    assertThat(target.size(), is(3));
-    assertThat(target, is(Arrays.asList(card1, card2, card)));
+    assertEquals(9, pile.size());
+    assertEquals(3, target.size());
+    assertEquals(Arrays.asList(card1, card2, card), target);
   }
 
   @Test
@@ -78,10 +79,10 @@ public class CardsTest {
 
     List<Card> cards = Cards.moveMany(source, target, sourceIndexes);
 
-    assertThat(source, is(Arrays.asList(card2)));
-    assertThat(target, is(Arrays.asList(card4, card3, card1)));
-    assertThat(cards, is(Arrays.asList(card3, card1)));
-    assertThat(sourceIndexes, is(new int[] { 2, 0 }));
+    assertEquals(Arrays.asList(card2), source);
+    assertEquals(Arrays.asList(card4, card3, card1), target);
+    assertEquals(Arrays.asList(card3, card1), cards);
+    assertArrayEquals(new int[]{ 2, 0 }, sourceIndexes);
   }
 
   @Test
@@ -92,10 +93,10 @@ public class CardsTest {
 
     List<Card> cards = Cards.moveMany(source, target, sourceIndexes);
 
-    assertThat(source, is(Arrays.asList(card1, card3)));
-    assertThat(target, is(Arrays.asList(card4, card2)));
-    assertThat(cards, is(Arrays.asList(card4, card2)));
-    assertThat(sourceIndexes, is(new int[] { 3, 1 }));
+    assertEquals(Arrays.asList(card1, card3), source);
+    assertEquals(Arrays.asList(card4, card2), target);
+    assertEquals(Arrays.asList(card4, card2), cards);
+    assertArrayEquals(new int[]{ 3, 1 }, sourceIndexes);
   }
 
   @Test
@@ -105,17 +106,17 @@ public class CardsTest {
 
     Cards.moveAll(source, target);
 
-    assertThat(source.size(), is(0));
-    assertThat(target, is(Arrays.asList(card5, card1, card2, card3, card4)));
+    assertEquals(0, source.size());
+    assertEquals(Arrays.asList(card5, card1, card2, card3, card4), target);
   }
 
   @Test
   public void shouldInverseIndexes() {
     int[] original = new int[] { 1, 2, 4 };
     int[] result = Cards.inverseIndexes(original, 6);
-    assertThat(result, is(new int[] { 0, 3, 5 }));
-    assertThat(original, is(new int[] { 1, 2, 4}));
-    assertThat(result == original, is(false));
+    assertArrayEquals(new int[]{0, 3, 5}, result);
+    assertArrayEquals(new int[]{1, 2, 4}, original);
+    assertNotSame(original, result);
   }
 
   @Test
@@ -130,9 +131,9 @@ public class CardsTest {
 
     List<Card> result = Cards.drawCards(player, 2, inout);
 
-    assertThat(result, is(Arrays.asList(card3, card2)));
-    assertThat(player.getDeck(), is(Arrays.asList(card1)));
-    assertThat(player.getHand(), is(Arrays.asList(card4, card3, card2)));
+    assertEquals(Arrays.asList(card3, card2), result);
+    assertEquals(Arrays.asList(card1), player.getDeck());
+    assertEquals(Arrays.asList(card4, card3, card2), player.getHand());
   }
 
   @Test
@@ -149,10 +150,10 @@ public class CardsTest {
 
     List<Card> result = Cards.drawCards(player, 1, inout);
 
-    assertThat(result, is(Arrays.asList(card3)));
-    assertThat(player.getDeck().size(), is(0));
-    assertThat(player.getHand(), is(Arrays.asList(card1, card2, card3)));
-    assertThat(player.getDiscard().size(), is(0));
+    assertEquals(Arrays.asList(card3), result);
+    assertEquals(0, player.getDeck().size());
+    assertEquals(Arrays.asList(card1, card2, card3), player.getHand());
+    assertEquals(0, player.getDiscard().size());
   }
 
   @Test
@@ -168,10 +169,10 @@ public class CardsTest {
 
     List<Card> result = Cards.drawCards(player, 4, inout);
 
-    assertThat(result, is(Arrays.asList(card4, card3, card2, card1)));
-    assertThat(player.getDeck().size(), is(0));
-    assertThat(player.getHand(), is(Arrays.asList(card4, card3, card2, card1)));
-    assertThat(player.getDiscard(), is(Arrays.asList(card5, card6)));
+    assertEquals(Arrays.asList(card4, card3, card2, card1), result);
+    assertEquals(0, player.getDeck().size());
+    assertEquals(Arrays.asList(card4, card3, card2, card1), player.getHand());
+    assertEquals(Arrays.asList(card5, card6), player.getDiscard());
   }
 
   @Test
@@ -188,10 +189,11 @@ public class CardsTest {
     player.getDiscard().addAll(Arrays.asList(card5, card6));
 
     List<Card> result = Cards.drawCards(player, 4, inout);
-    assertThat(result, is(Arrays.asList(card3, card2, card1, card6)));
-    assertThat(player.getDeck(), is(Arrays.asList(card5)));
-    assertThat(player.getHand(), is(Arrays.asList(card4, card3, card2, card1, card6)));
-    assertThat(player.getDiscard().size(), is(0));
+
+    assertEquals(Arrays.asList(card3, card2, card1, card6), result);
+    assertEquals(Arrays.asList(card5), player.getDeck());
+    assertEquals(Arrays.asList(card4, card3, card2, card1, card6), player.getHand());
+    assertEquals(0, player.getDiscard().size());
   }
 
   @Test
@@ -208,10 +210,11 @@ public class CardsTest {
     player.getDiscard().addAll(Arrays.asList(card5, card6));
 
     List<Card> result = Cards.drawCards(player, 5, inout);
-    assertThat(result, is(Arrays.asList(card3, card2, card1, card6, card5)));
-    assertThat(player.getHand(), is(Arrays.asList(card4, card3, card2, card1, card6, card5)));
-    assertThat(player.getDeck().size(), is(0));
-    assertThat(player.getDiscard().size(), is(0));
+
+    assertEquals(Arrays.asList(card3, card2, card1, card6, card5), result);
+    assertEquals(Arrays.asList(card4, card3, card2, card1, card6, card5), player.getHand());
+    assertEquals(0, player.getDeck().size());
+    assertEquals(0, player.getDiscard().size());
   }
 
   @Test
@@ -228,9 +231,10 @@ public class CardsTest {
     player.getDiscard().addAll(Arrays.asList(card5, card6));
 
     List<Card> result = Cards.drawCards(player, 5, inout);
-    assertThat(result, is(Arrays.asList(card2, card1, card6, card5)));
-    assertThat(player.getHand(), is(Arrays.asList(card3, card4, card2, card1, card6, card5)));
-    assertThat(player.getDeck().size(), is(0));
-    assertThat(player.getDiscard().size(), is(0));
+
+    assertEquals(Arrays.asList(card2, card1, card6, card5), result);
+    assertEquals(Arrays.asList(card3, card4, card2, card1, card6, card5), player.getHand());
+    assertEquals(0, player.getDeck().size());
+    assertEquals(0, player.getDiscard().size());
   }
 }
