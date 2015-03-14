@@ -1,0 +1,14 @@
+{
+    "formula":"equals(amount, 1000) or contains(description, Caltex)",
+    "left":{
+        "left":{"value":"amount"},
+        "operator":"equals",
+        "right":{"value":"1000"}
+    },
+    "operator":"or",
+    "right":{
+        "left":{"value":"description"},
+        "operator":"contains",
+        "right":{"value":"Caltex"}
+    }
+}

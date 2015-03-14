@@ -1,0 +1,38 @@
+{
+    "formula":"(equals(amount, 1000) or contains(description, caltex)) and ((equals(price, 210) and contains(name, xero)) or contains(comments, myob))",
+    "left":{
+        "left":{
+            "left":{"value":"amount"},
+            "operator":"equals",
+            "right":{"value":"1000"}
+        },
+        "operator":"or",
+        "right":{
+            "left":{"value":"description"},
+            "operator":"contains",
+            "right":{"value":"caltex"}
+        }
+    },
+    "operator":"and",
+    "right":{
+        "left":{
+            "left":{
+                "left":{"value":"price"},
+                "operator":"equals",
+                "right":{"value":"210"}
+            },
+            "operator":"and",
+            "right":{
+                "left":{"value":"name"},
+                "operator":"contains",
+                "right":{"value":"xero"}
+            }
+        },
+        "operator":"or",
+        "right":{
+            "left":{"value":"comments"},
+            "operator":"contains",
+            "right":{"value":"myob"}
+        }
+    }
+}
