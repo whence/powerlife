@@ -7,9 +7,13 @@ object RuleApplication {
   case class Predicate(field: String, operator: String, rhs: String) extends Expr
   case class LogicalExpr(left: Expr, operator: String, right: Expr) extends Expr
 
+  // NOTE: I can't get Reads[T] to work with recursive ADT, the closest I get is
+  // http://blog.clement.delafargue.name/posts/2013-04-13-adt-serialization-with-play-json.html
+  // but it didn't work. thus I write my own parse
   def parse(rawJson: String): Either[ValidationError, Expr] = {
     val json = Json.parse(rawJson)
 
+    // TODO: tailrec
     def loop(json: JsValue): Either[ValidationError, Expr] = {
       (json \ "field").asOpt[String] match {
         case Some(field) =>
@@ -58,6 +62,7 @@ object RuleApplication {
       case "name" => "xero accounting"
   }
 
+  // TODO: tailrec
   def exec(expr: Expr): Boolean = expr match {
     case pred @ Predicate(field, operator, rhs) =>
       predicateToFunction(pred)(fieldToType(field))
