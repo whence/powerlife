@@ -5,9 +5,19 @@
     <link rel="stylesheet" href="/static/bootstrap/dist/css/bootstrap-theme.min.css">
   </head>
   <body>
+    <div id="lmserve-app">
+      <ul id="album-list" class="list-unstyled"></ul>
+    </div>
+    
     <script src="/static/jquery/dist/jquery.min.js"></script>
     <script src="/static/underscore/underscore-min.js"></script>
     <script src="/static/backbone/backbone.js"></script>
     <script src="/app/app.js"></script>
+
+    <script type="text/template" id="album-summary-template">
+      <a href="#" data-path="<%- path %>" class="view-album">
+        <h3><%- name %> (<%= photos.length %>)</h3>
+      </a>
+    </script>
   </body>
 </html>
