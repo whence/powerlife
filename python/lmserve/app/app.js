@@ -17,8 +17,6 @@ $(function() {
         }
     });
 
-    var Albums = new AlbumList();
-
     var AlbumSummaryView = Backbone.View.extend({
         tagName: 'li',
         
@@ -26,7 +24,6 @@ $(function() {
 
         initialize: function() {
             this.listenTo(this.model, 'change', this.render);
-            this.listenTo(this.model, 'destroy', this.remove);
         },
 
         render: function() {
@@ -35,24 +32,25 @@ $(function() {
         },
     });
 
-    var AppView = Backbone.View.extend({
-        el: $('#lmserve-app'),
+    var AlbumListView = Backbone.View.extend({
+        tagName: 'ul',
+
+        className: 'list-unstyled',
 
         initialize: function() {
-            this.listenTo(Albums, 'add', this.addOne);
-            this.listenTo(Albums, 'reset', this.addAll);
-            Albums.fetch({reset: true});
+            this.collection = new AlbumList();
+            this.listenTo(this.collection, 'reset', this.render);
+            this.collection.fetch({reset: true});
         },
 
-        addOne: function(album) {
-            var view = new AlbumSummaryView({model: album});
-            this.$('#album-list').append(view.render().el);
-        },
-
-        addAll: function() {
-            Albums.each(this.addOne, this);
+        render: function() {
+            this.$el.empty();
+            this.collection.each(function(model) {
+                var view = new AlbumSummaryView({model: model});
+                this.$el.append(view.render().el);
+            }, this);
         }
     });
 
-    new AppView();
+    $('#lmserve-app').html(new AlbumListView().el);
 });
