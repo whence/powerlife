@@ -37,4 +37,4 @@ def api_albums():
 def api_album(filepath):
     return {'photos': get_photo_urls(lms_root, filepath, lambda filename: '/lms/' + filepath + '/' + filename)}
 
-run(host='localhost', port=8080)
+run(host='0.0.0.0', port=8080)
