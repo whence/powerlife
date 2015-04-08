@@ -13,9 +13,12 @@
     <script src="/app/app.js"></script>
 
     <script type="text/template" id="album-summary-template">
-      <a href="#" data-path="<%- path %>" class="view-album">
-        <h3><%- name %> (<%= photos.length %>)</h3>
-      </a>
+      <h3 class="select-album"><%- name %> (<%= photos.length %>)</h3>
+    </script>
+
+    <script type="text/template" id="album-detail-template">
+      <h3><%- name %> (<%= photos %>)</h3>
+      <button class="close-album">Close</button>
     </script>
   </body>
 </html>

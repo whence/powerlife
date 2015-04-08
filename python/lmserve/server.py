@@ -30,4 +30,8 @@ albums = get_albums(lms_root)
 def api_albums():
     return {'albums': albums}
 
+@route('/api/albums/<filepath:path>')
+def api_album(filepath):
+    return {'name': 'bec', 'path': filepath, 'photos': ['1.jpg', '2.jpg']};
+
 run(host='localhost', port=8080)
