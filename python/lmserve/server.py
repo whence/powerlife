@@ -24,6 +24,9 @@ def get_albums(root):
             for subdir in os.listdir(root) if os.path.isdir(os.path.join(root, subdir))
             for album in os.listdir(os.path.join(root, subdir)) if os.path.isdir(os.path.join(root, subdir, album))]
 
+def get_photo_urls(root, path, gen_url):
+    return [gen_url(filename) for filename in os.listdir(os.path.join(root, path)) if filename.endswith('.jpg') or filename.endswith('.jpeg')]
+
 albums = get_albums(lms_root)
 
 @route('/api/albums')
@@ -32,6 +35,6 @@ def api_albums():
 
 @route('/api/albums/<filepath:path>')
 def api_album(filepath):
-    return {'name': 'bec', 'path': filepath, 'photos': ['1.jpg', '2.jpg']};
+    return {'photos': get_photo_urls(lms_root, filepath, lambda filename: '/lms/' + filepath + '/' + filename)}
 
 run(host='localhost', port=8080)

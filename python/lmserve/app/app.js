@@ -78,17 +78,29 @@ $(function() {
         template: _.template($('#album-detail-template').html()),
 
         events: {
-            'click .close-album': 'unselect'
+            'click .close-album': 'unselect',
+            'click img': 'next'
         },
 
         initialize: function() {
+            this.photoIndex = 0;
             this.listenTo(this.model, 'change', this.render);            
             this.listenTo(this.model, 'change:selected', this.closeOnUnselect);
+            this.$el.html(this.template());
+            this.img = this.$('img');
         },
 
         render: function() {
-            this.$el.html(this.template(this.model.toJSON()));
+            if (this.photoIndex >= this.model.get('photos').length) {
+                this.photoIndex = 0;
+            }
+            this.img.attr('src', this.model.get('photos')[this.photoIndex]);
             return this;
+        },
+
+        next: function() {
+            this.photoIndex++;
+            this.render();
         },
 
         unselect: function() {
