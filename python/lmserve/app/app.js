@@ -78,8 +78,8 @@ $(function() {
         template: _.template($('#album-detail-template').html()),
 
         events: {
-            'click img': function() { this.updateIndex(1); },
-            'click .first': function() { this.updateIndex(0); },
+            'click .image': function() { this.updateIndex(1); },
+            'click .first': function() { this.updateIndex(-this.model.get('photos').length); },
             'click .prev-fast': function() { this.updateIndex(-10); },
             'click .prev': function() { this.updateIndex(-1); },
             'click .next': function() { this.updateIndex(1); },
@@ -93,8 +93,8 @@ $(function() {
             this.listenTo(this.model, 'change', this.render);            
             this.listenTo(this.model, 'change:selected', this.closeOnUnselect);
             this.$el.html(this.template());
-            this.img = this.$('img');
-            this.span = this.$('span');
+            this.image = this.$('.image');
+            this.title = this.$('.title');
             this.lastButton = this.$('button.last');
             this.forwardButtons = this.$('button.forward');
             this.backwardButtons = this.$('button.backward');
@@ -117,8 +117,8 @@ $(function() {
         },
 
         render: function() {
-            this.span.text(this.model.get('name'));
-            this.img.attr('src', this.model.get('photos')[this.photoIndex]);
+            this.title.text(this.model.get('name'));
+            this.image.attr('src', this.model.get('photos')[this.photoIndex]);
             this.lastButton.text(this.model.get('photos').length);
             this.forwardButtons.prop('disabled', this.photoIndex >= this.model.get('photos').length - 1);
             this.backwardButtons.prop('disabled', this.photoIndex <= 0);
