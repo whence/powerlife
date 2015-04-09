@@ -47,7 +47,7 @@ $(function() {
     var AlbumListView = Backbone.View.extend({
         tagName: 'ul',
 
-        className: 'list-unstyled',
+        className: 'list-inline',
 
         initialize: function() {
             this.listenTo(this.collection, 'reset', this.render);
@@ -78,8 +78,14 @@ $(function() {
         template: _.template($('#album-detail-template').html()),
 
         events: {
-            'click .close-album': 'unselect',
-            'click img': 'next'
+            'click img': function() { this.updateIndex(1); },
+            'click .first': function() { this.updateIndex(0); },
+            'click .prev-fast': function() { this.updateIndex(-10); },
+            'click .prev': function() { this.updateIndex(-1); },
+            'click .next': function() { this.updateIndex(1); },
+            'click .next-fast': function() { this.updateIndex(10); },
+            'click .last': function() { this.updateIndex(this.model.get('photos').length); },
+            'click .close-album': 'unselect'
         },
 
         initialize: function() {
@@ -88,19 +94,35 @@ $(function() {
             this.listenTo(this.model, 'change:selected', this.closeOnUnselect);
             this.$el.html(this.template());
             this.img = this.$('img');
+            this.span = this.$('span');
+            this.lastButton = this.$('button.last');
+            this.forwardButtons = this.$('button.forward');
+            this.backwardButtons = this.$('button.backward');
+        },
+
+        updateIndex: function(delta) {
+            var length = this.model.get('photos').length;
+            var index = this.photoIndex;
+            index += delta;
+
+            if (index >= length) {
+                index = length - 1;
+            } else if (index < 0) {
+                index = 0;
+            }
+
+            this.photoIndex = index;
+
+            this.render();
         },
 
         render: function() {
-            if (this.photoIndex >= this.model.get('photos').length) {
-                this.photoIndex = 0;
-            }
+            this.span.text(this.model.get('name'));
             this.img.attr('src', this.model.get('photos')[this.photoIndex]);
+            this.lastButton.text(this.model.get('photos').length);
+            this.forwardButtons.prop('disabled', this.photoIndex >= this.model.get('photos').length - 1);
+            this.backwardButtons.prop('disabled', this.photoIndex <= 0);
             return this;
-        },
-
-        next: function() {
-            this.photoIndex++;
-            this.render();
         },
 
         unselect: function() {

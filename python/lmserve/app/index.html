@@ -13,13 +13,21 @@
     <script src="/app/app.js"></script>
 
     <script type="text/template" id="album-summary-template">
-      <h3 class="select-album"><%- name %> (<%= photos.length %>)</h3>
+      <button class="btn btn-lg select-album"><%- name %> (<%= photos.length %>)</button>
     </script>
 
     <script type="text/template" id="album-detail-template">
+      <p>
+        <span class="h2"></span>
+        <button class="btn btn-lg backward first">1</button>
+        <button class="btn btn-lg backward prev-fast">-10</button>
+        <button class="btn btn-lg backward prev">-1</button>
+        <button class="btn btn-lg forward next">+1</button>
+        <button class="btn btn-lg forward next-fast">+10</button>
+        <button class="btn btn-lg forward last">..</button>
+        <button class="btn btn-lg close-album">Close</button>
+      </p>
       <img>
-      <br>
-      <button class="close-album">Close</button>
     </script>
   </body>
 </html>
