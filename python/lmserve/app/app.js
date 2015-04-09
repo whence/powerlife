@@ -117,7 +117,7 @@ $(function() {
         },
 
         render: function() {
-            this.title.text(this.model.get('name'));
+            this.title.text(this.model.get('name') + ' ' + (this.photoIndex + 1));
             this.image.attr('src', this.model.get('photos')[this.photoIndex]);
             this.lastButton.text(this.model.get('photos').length);
             this.forwardButtons.prop('disabled', this.photoIndex >= this.model.get('photos').length - 1);
