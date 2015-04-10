@@ -24,14 +24,14 @@ def serve_image(filepath):
     if width > height:
         rotated = image.transpose(Image.ROTATE_90)
         output = StringIO.StringIO()
-        rotated.save(output, 'JPEG')
+        rotated.save(output, 'JPEG', quality=85)
         content = output.getvalue()
         image.close()
         rotated.close()
         output.close()
     else:
         output = StringIO.StringIO()
-        image.save(output, 'JPEG')
+        image.save(output, 'JPEG', quality=85)
         content = output.getvalue()
         image.close()
         output.close()
