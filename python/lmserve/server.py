@@ -1,4 +1,6 @@
-from bottle import route, run, static_file
+from bottle import route, run, static_file, response, HTTPResponse
+from PIL import Image
+import StringIO
 import os
 
 lms_root = os.path.expanduser('~/lms')
@@ -15,9 +17,31 @@ def serve_app(filepath):
 def serve_static(filepath):
     return static_file(filepath, root='bower_components')
 
+def serve_image(filepath):
+    image = Image.open(filepath)
+    width, height = image.size
+
+    if width > height:
+        rotated = image.transpose(Image.ROTATE_90)
+        output = StringIO.StringIO()
+        rotated.save(output, 'JPEG')
+        content = output.getvalue()
+        image.close()
+        rotated.close()
+        output.close()
+    else:
+        output = StringIO.StringIO()
+        image.save(output, 'JPEG')
+        content = output.getvalue()
+        image.close()
+        output.close()
+        
+    headers = {'content-type': 'image/jpeg', 'content-length': len(content) }
+    return HTTPResponse(content, **headers)
+
 @route('/lms/<filepath:path>')
 def serve_lms(filepath):
-    return static_file(filepath, root=lms_root)
+    return serve_image(os.path.join(lms_root, filepath))
 
 def get_albums(root):
     return [{'name': album, 'path': os.path.join(subdir, album)}
