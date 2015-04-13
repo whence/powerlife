@@ -78,7 +78,7 @@ $(function() {
         template: _.template($('#album-detail-template').html()),
 
         events: {
-            'click .image': function() { this.updateIndex(1); },
+            'click img': function() { this.updateIndex(1); },
             'click .first': function() { this.updateIndex(-this.model.get('photos').length); },
             'click .prev-fast': function() { this.updateIndex(-10); },
             'click .prev': function() { this.updateIndex(-1); },
@@ -93,7 +93,8 @@ $(function() {
             this.listenTo(this.model, 'change', this.render);            
             this.listenTo(this.model, 'change:selected', this.closeOnUnselect);
             this.$el.html(this.template());
-            this.image = this.$('.image');
+            this.imageOdd = this.$('img.odd');
+            this.imageEven = this.$('img.even');
             this.title = this.$('.title');
             this.lastButton = this.$('button.last');
             this.forwardButtons = this.$('button.forward');
@@ -118,11 +119,26 @@ $(function() {
 
         render: function() {
             this.title.text(this.model.get('name') + ' ' + (this.photoIndex + 1));
-            this.image.attr('src', this.model.get('photos')[this.photoIndex]);
+
+            var imageCurrent = (this.photoIndex % 2 === 0 ? this.imageEven : this.imageOdd);
+            var imageNext = (this.photoIndex % 2 === 0 ? this.imageOdd : this.imageEven);
+            this.updateImage(imageCurrent, this.model.get('photos')[this.photoIndex]);
+            imageCurrent.show();
+            if (this.photoIndex + 1 < this.model.get('photos').length) {
+                this.updateImage(imageNext, this.model.get('photos')[this.photoIndex + 1]);
+            }
+            imageNext.hide();
+
             this.lastButton.text(this.model.get('photos').length);
             this.forwardButtons.prop('disabled', this.photoIndex >= this.model.get('photos').length - 1);
             this.backwardButtons.prop('disabled', this.photoIndex <= 0);
             return this;
+        },
+
+        updateImage: function(image, src) {
+            if (image.attr('src') !== src) {
+                image.attr('src', src)
+            }
         },
 
         unselect: function() {
