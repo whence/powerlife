@@ -1,3 +1,5 @@
+open Core.Std
+
 type stage =
   | Action of int * int * int
   | Treasure of int * int
@@ -21,7 +23,6 @@ and player = {
 and pile = {
     sample: card;
     mutable size: int;
-    generator: unit -> card;
     mutable buffer: card list;
   }
 and card =
@@ -30,3 +31,24 @@ and card =
   | BasicTreasureCard of string * int * int
   | BasicVictoryCard of string * int * int
   | ComboCard of card * card
+
+let copper = BasicTreasureCard ("Copper", 0, 1)
+let silver = BasicTreasureCard ("Silver", 3, 2)
+let gold = BasicTreasureCard ("Gold", 6, 3)
+
+let estate = BasicVictoryCard ("Estate", 2, 1)
+let duchy = BasicVictoryCard ("Duchy", 5, 3)
+let province = BasicVictoryCard ("Province", 8, 6)
+
+let create_player name =
+  let deck = 
+    let estates = List.init 3 ~f:(fun _ -> estate) in
+    let coppers = List.init 7 ~f:(fun _ -> copper) in
+    List.permute (estates @ coppers)
+  in
+  { name;
+    deck = List.take deck 5;
+    hand = List.drop deck 5;
+    played = [];
+    discard = [];
+  }
