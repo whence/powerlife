@@ -8,9 +8,9 @@ type stage =
 
 type game = {
     players: player list;
+    mutable active_player_index: int;
     piles: pile list;
     mutable trash: card list;
-    mutable active_player_index: int;
     mutable stage: stage;
   }
 and player = {
@@ -30,7 +30,6 @@ and card =
   | SelfTrashActionCard of string * int * (game * bool -> bool)
   | BasicTreasureCard of string * int * int
   | BasicVictoryCard of string * int * int
-  | ComboCard of card * card
 
 let copper = BasicTreasureCard ("Copper", 0, 1)
 let silver = BasicTreasureCard ("Silver", 3, 2)
@@ -39,6 +38,10 @@ let gold = BasicTreasureCard ("Gold", 6, 3)
 let estate = BasicVictoryCard ("Estate", 2, 1)
 let duchy = BasicVictoryCard ("Duchy", 5, 3)
 let province = BasicVictoryCard ("Province", 8, 6)
+
+let remodel =
+  let play game = () in
+  BasicActionCard ("Remodel", 4, play)
 
 let create_player name =
   let deck = 
@@ -52,3 +55,49 @@ let create_player name =
     played = [];
     discard = [];
   }
+
+let create_start_piles kingdom_cards =
+  let pile size sample = { sample; size; buffer = [] } in
+  let commons = [pile 60 copper; pile 12 estate] in
+  let kingdoms = List.map kingdom_cards ~f:(pile 10) in
+  commons @ kingdoms
+
+let create_game names =
+  { players = List.map names ~f:create_player;
+    active_player_index = Random.int (List.length names);
+    piles = create_start_piles [remodel];
+    trash = [];
+    stage = Action (1, 1, 0);
+  }
+
+let card_name = function
+  | BasicActionCard (name, _, _) -> name
+  | SelfTrashActionCard (name, _, _) -> name
+  | BasicTreasureCard (name, _, _) -> name
+  | BasicVictoryCard (name, _, _) -> name
+
+let card_cost = function
+  | BasicActionCard (_, cost, _) -> cost
+  | SelfTrashActionCard (_, cost, _) -> cost
+  | BasicTreasureCard (_, cost, _) -> cost
+  | BasicVictoryCard (_, cost, _) -> cost
+
+let is_action = function
+  | BasicActionCard (_, _, _) -> true
+  | SelfTrashActionCard (_, _, _) -> true
+  | BasicTreasureCard (_, _, _) -> false
+  | BasicVictoryCard (_, _, _) -> false
+
+let is_treasure = function
+  | BasicActionCard (_, _, _) -> false
+  | SelfTrashActionCard (_, _, _) -> false
+  | BasicTreasureCard (_, _, _) -> true
+  | BasicVictoryCard (_, _, _) -> false
+
+let is_victory = function
+  | BasicActionCard (_, _, _) -> false
+  | SelfTrashActionCard (_, _, _) -> false
+  | BasicTreasureCard (_, _, _) -> false
+  | BasicVictoryCard (_, _, _) -> true
+
+let same_kind x y = (card_name x) = (card_name y)
