@@ -23,7 +23,6 @@ and player = {
 and pile = {
     sample: card;
     mutable size: int;
-    mutable buffer: card list;
   }
 and card =
   | BasicActionCard of string * int * (game -> unit)
@@ -57,7 +56,7 @@ let create_player name =
   }
 
 let create_start_piles kingdom_cards =
-  let pile size sample = { sample; size; buffer = [] } in
+  let pile size sample = { sample; size } in
   let commons = [pile 60 copper; pile 12 estate] in
   let kingdoms = List.map kingdom_cards ~f:(pile 10) in
   commons @ kingdoms
@@ -101,3 +100,12 @@ let is_victory = function
   | BasicVictoryCard (_, _, _) -> true
 
 let same_kind x y = (card_name x) = (card_name y)
+
+let split_by_indexes xs indexes =
+  let aux i acc x = match acc with
+    | (yes, no, hd :: tl) when i = hd -> (x :: yes, no, tl)
+    | (yes, no, l) -> (yes, x :: no, l)
+  in
+  let (yes, no, _) = List.foldi xs ~f:aux ~init:([], [], indexes) in
+  (List.rev yes, List.rev no)
+                                           
