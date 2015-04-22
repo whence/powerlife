@@ -81,9 +81,11 @@ $(function() {
             'click img': function() { this.updateIndex(1); },
             'click .first': function() { this.updateIndex(-this.model.get('photos').length); },
             'click .prev-fast': function() { this.updateIndex(-10); },
+            'click .prev-fast-fast': function() { this.updateIndex(-50); },
             'click .prev': function() { this.updateIndex(-1); },
             'click .next': function() { this.updateIndex(1); },
             'click .next-fast': function() { this.updateIndex(10); },
+            'click .next-fast-fast': function() { this.updateIndex(50); },
             'click .last': function() { this.updateIndex(this.model.get('photos').length); },
             'click .close-album': 'unselect'
         },
