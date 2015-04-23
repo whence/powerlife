@@ -186,3 +186,19 @@ let create_recorded_io inputs =
   let output message = outputs := message :: !outputs in
   let dump_outputs () = List.rev !outputs in
   ({ input; output }, dump_outputs)
+
+let rec draw_cards_loop n_remain acc =
+  if n_remain = 0 then acc
+  else match acc with
+       | ([], _, [], _) -> acc
+       | ([], hand, discard, drawed) ->
+          draw_cards_loop n_remain (List.permute discard, hand, [], drawed)
+       | (hd :: tl, hand, discard, drawed) ->
+          draw_cards_loop (n_remain - 1) (tl, hd :: hand, discard, hd :: drawed)
+
+let draw_cards n player =
+  let (deck, hand, discard, drawed) = draw_cards_loop n (player.deck, player.hand, player.discard, []) in
+  player.deck <- deck;
+  player.hand <- hand;
+  player.discard <- discard;
+  drawed
