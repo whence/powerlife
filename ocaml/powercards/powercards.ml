@@ -30,6 +30,13 @@ and card =
   | BasicTreasureCard of string * int * int
   | BasicVictoryCard of string * int * int
 
+type io = {
+    input: unit -> string;
+    output: string -> unit;
+  }
+type requirement = Unlimited | MandatoryOne | OptionalOne
+type choice = Unselectable | Skip | Indexes of int list
+
 let copper = BasicTreasureCard ("Copper", 0, 1)
 let silver = BasicTreasureCard ("Silver", 3, 2)
 let gold = BasicTreasureCard ("Gold", 6, 3)
@@ -108,4 +115,74 @@ let split_by_indexes xs indexes =
   in
   let (yes, no, _) = List.foldi xs ~f:aux ~init:([], [], indexes) in
   (List.rev yes, List.rev no)
-                                           
+
+let choose io requirement message items =
+  let out_item i item =
+    sprintf "[%d] %s %s" i (fst item) (if snd item then "(select)" else "")
+    |> io.output
+  in
+  let rec loop () =
+    io.output message;
+    List.iteri items ~f:out_item;
+    if List.exists items ~f:snd then
+      match requirement with
+      | MandatoryOne ->
+         let index = int_of_string (io.input()) in
+         let (name, selectable) = List.nth_exn items index in
+         if selectable then Indexes [index]
+         else
+           let () = io.output (sprintf "%s is not selectable" name) in
+           loop()
+      | OptionalOne ->
+         let () = io.output "or skip" in
+         let raw_input = io.input() in
+         if raw_input = "skip" then Skip
+         else
+           let index = int_of_string raw_input in
+           let (name, selectable) = List.nth_exn items index in
+           if selectable then Indexes [index]
+           else
+             let () = io.output (sprintf "%s is not selectable" name) in
+             loop()
+      | Unlimited ->
+         let () = io.output "or all, or skip" in
+         match io.input() with
+         | "skip" -> Skip
+         | "all" ->
+            let indexes = List.filter_mapi items ~f:(fun i (_, selectable) ->
+                                                     if selectable then Some i else None)
+            in Indexes indexes
+         | raw_input ->
+            let indexes = raw_input
+                          |> String.split ~on:','
+                          |> List.map ~f:String.strip
+                          |> List.filter ~f:(Fn.non String.is_empty)
+                          |> List.map ~f:int_of_string
+                          |> List.sort ~cmp:compare
+            in
+            if List.exists indexes ~f:(fun i ->
+                                       let (_, selectable) = List.nth_exn items i in
+                                       not selectable) then
+              let () = io.output "Some choices are not selectable" in
+              loop()
+            else
+              Indexes indexes
+    else Unselectable
+  in
+  loop()
+
+let create_console_io () = {
+    input = read_line;
+    output = print_endline;
+  }
+
+let create_recorded_io inputs =
+  let inputs = ref inputs in
+  let outputs = ref [] in
+  let input () = match !inputs with
+    | [] -> failwith "no more recorded input to use"
+    | hd :: tl -> inputs := tl; hd
+  in
+  let output message = outputs := message :: !outputs in
+  let dump_outputs () = List.rev !outputs in
+  ({ input; output }, dump_outputs)
