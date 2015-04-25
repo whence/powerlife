@@ -7,23 +7,23 @@ type stage =
   | Cleanup
 
 type game = {
-    players: player list;
-    mutable active_player_index: int;
-    piles: pile list;
-    mutable trash: card list;
-    mutable stage: stage;
-  }
+  players: player list;
+  mutable active_player_index: int;
+  piles: pile list;
+  mutable trash: card list;
+  mutable stage: stage;
+}
 and player = {
-    name: string;
-    mutable deck: card list;
-    mutable hand: card list;
-    mutable played: card list;
-    mutable discard: card list;
-  }
+  name: string;
+  mutable deck: card list;
+  mutable hand: card list;
+  mutable played: card list;
+  mutable discard: card list;
+}
 and pile = {
-    sample: card;
-    mutable size: int;
-  }
+  sample: card;
+  mutable size: int;
+}
 and card =
   | BasicActionCard of string * int * (game -> unit)
   | SelfTrashActionCard of string * int * (game * bool -> bool)
@@ -31,9 +31,9 @@ and card =
   | BasicVictoryCard of string * int * int
 
 type io = {
-    input: unit -> string;
-    output: string -> unit;
-  }
+  input: unit -> string;
+  output: string -> unit;
+}
 type requirement = Unlimited | MandatoryOne | OptionalOne
 type choice = Unselectable | Skip | Indexes of int list
 
@@ -127,54 +127,57 @@ let choose io requirement message items =
     if List.exists items ~f:snd then
       match requirement with
       | MandatoryOne ->
-         let index = int_of_string (io.input()) in
-         let (name, selectable) = List.nth_exn items index in
-         if selectable then Indexes [index]
-         else
-           let () = io.output (sprintf "%s is not selectable" name) in
-           loop()
+        let index = int_of_string (io.input()) in
+        let (name, selectable) = List.nth_exn items index in
+        if selectable then Indexes [index]
+        else begin
+          io.output (sprintf "%s is not selectable" name);
+          loop()
+        end
       | OptionalOne ->
-         let () = io.output "or skip" in
-         let raw_input = io.input() in
-         if raw_input = "skip" then Skip
-         else
-           let index = int_of_string raw_input in
-           let (name, selectable) = List.nth_exn items index in
-           if selectable then Indexes [index]
-           else
-             let () = io.output (sprintf "%s is not selectable" name) in
-             loop()
+        io.output "or skip";
+        let raw_input = io.input() in
+        if raw_input = "skip" then Skip
+        else
+          let index = int_of_string raw_input in
+          let (name, selectable) = List.nth_exn items index in
+          if selectable then Indexes [index]
+          else begin
+            io.output (sprintf "%s is not selectable" name);
+            loop()
+          end
       | Unlimited ->
-         let () = io.output "or all, or skip" in
-         match io.input() with
-         | "skip" -> Skip
-         | "all" ->
-            let indexes = List.filter_mapi items ~f:(fun i (_, selectable) ->
-                                                     if selectable then Some i else None)
-            in Indexes indexes
-         | raw_input ->
-            let indexes = raw_input
-                          |> String.split ~on:','
-                          |> List.map ~f:String.strip
-                          |> List.filter ~f:(Fn.non String.is_empty)
-                          |> List.map ~f:int_of_string
-                          |> List.sort ~cmp:compare
-            in
-            if List.exists indexes ~f:(fun i ->
-                                       let (_, selectable) = List.nth_exn items i in
-                                       not selectable) then
-              let () = io.output "Some choices are not selectable" in
-              loop()
-            else
-              Indexes indexes
+        io.output "or all, or skip";
+        match io.input() with
+        | "skip" -> Skip
+        | "all" ->
+          let indexes = List.filter_mapi items ~f:(fun i (_, selectable) ->
+              if selectable then Some i else None)
+          in Indexes indexes
+        | raw_input ->
+          let indexes = raw_input
+                        |> String.split ~on:','
+                        |> List.map ~f:String.strip
+                        |> List.filter ~f:(Fn.non String.is_empty)
+                        |> List.map ~f:int_of_string
+                        |> List.sort ~cmp:compare
+          in
+          if List.exists indexes ~f:(fun i ->
+              let (_, selectable) = List.nth_exn items i in
+              not selectable) then begin
+            io.output "Some choices are not selectable";
+            loop()
+          end
+          else
+            Indexes indexes
     else Unselectable
   in
   loop()
 
 let create_console_io () = {
-    input = read_line;
-    output = print_endline;
-  }
+  input = read_line;
+  output = print_endline;
+}
 
 let create_recorded_io inputs =
   let inputs = ref inputs in
@@ -190,11 +193,11 @@ let create_recorded_io inputs =
 let rec draw_cards_loop n_remain acc =
   if n_remain = 0 then acc
   else match acc with
-       | ([], _, [], _) -> acc
-       | ([], hand, discard, drawed) ->
-          draw_cards_loop n_remain (List.permute discard, hand, [], drawed)
-       | (hd :: tl, hand, discard, drawed) ->
-          draw_cards_loop (n_remain - 1) (tl, hd :: hand, discard, hd :: drawed)
+    | ([], _, [], _) -> acc
+    | ([], hand, discard, drawed) ->
+      draw_cards_loop n_remain (List.permute discard, hand, [], drawed)
+    | (hd :: tl, hand, discard, drawed) ->
+      draw_cards_loop (n_remain - 1) (tl, hd :: hand, discard, hd :: drawed)
 
 let draw_cards n player =
   let (deck, hand, discard, drawed) = draw_cards_loop n (player.deck, player.hand, player.discard, []) in
@@ -202,3 +205,6 @@ let draw_cards n player =
   player.hand <- hand;
   player.discard <- discard;
   drawed
+
+let active_player game =
+  List.nth_exn game.players game.active_player_index
