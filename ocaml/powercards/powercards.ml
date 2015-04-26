@@ -1,10 +1,12 @@
 open Core.Std
 
-type stage =
-  | Action of int * int * int
-  | Treasure of int * int
-  | Buy of int * int
-  | Cleanup
+type stage = Action | Treasure | Buy | Cleanup
+
+type stat = {
+  mutable actions: int;
+  mutable buys: int;
+  mutable coins: int;
+}
 
 type game = {
   players: player list;
@@ -12,6 +14,7 @@ type game = {
   piles: pile list;
   mutable trash: card list;
   mutable stage: stage;
+  stat: stat;
 }
 and player = {
   name: string;
@@ -73,7 +76,8 @@ let create_game names =
     active_player_index = Random.int (List.length names);
     piles = create_start_piles [remodel];
     trash = [];
-    stage = Action (1, 1, 0);
+    stage = Action;
+    stat = { actions = 1; buys = 1; coins = 0 };
   }
 
 let card_name = function
