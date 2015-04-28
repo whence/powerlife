@@ -121,62 +121,58 @@ let split_by_indexes xs indexes =
   (List.rev yes, List.rev no)
 
 let choose io requirement message items =
-  let out_item i item =
-    sprintf "[%d] %s %s" i (fst item) (if snd item then "(select)" else "")
-    |> io.output
-  in
   let rec loop () =
     io.output message;
-    List.iteri items ~f:out_item;
-    if List.exists items ~f:snd then
-      match requirement with
-      | MandatoryOne ->
-        let index = int_of_string (io.input()) in
+    List.iteri items ~f:(fun i item ->
+        sprintf "[%d] %s %s" i (fst item) (if snd item then "(select)" else "")
+        |> io.output);
+    match requirement with
+    | MandatoryOne ->
+      let index = int_of_string (io.input()) in
+      let (name, selectable) = List.nth_exn items index in
+      if selectable then Indexes [index]
+      else begin
+        io.output (sprintf "%s is not selectable" name);
+        loop()
+      end
+    | OptionalOne ->
+      io.output "or skip";
+      let raw_input = io.input() in
+      if raw_input = "skip" then Skip
+      else
+        let index = int_of_string raw_input in
         let (name, selectable) = List.nth_exn items index in
         if selectable then Indexes [index]
         else begin
           io.output (sprintf "%s is not selectable" name);
           loop()
         end
-      | OptionalOne ->
-        io.output "or skip";
-        let raw_input = io.input() in
-        if raw_input = "skip" then Skip
+    | Unlimited ->
+      io.output "or all, or skip";
+      match io.input() with
+      | "skip" -> Skip
+      | "all" ->
+        let indexes = List.filter_mapi items ~f:(fun i (_, selectable) ->
+            if selectable then Some i else None)
+        in Indexes indexes
+      | raw_input ->
+        let indexes = raw_input
+                      |> String.split ~on:','
+                      |> List.map ~f:String.strip
+                      |> List.filter ~f:(Fn.non String.is_empty)
+                      |> List.map ~f:int_of_string
+                      |> List.sort ~cmp:compare
+        in
+        if List.exists indexes ~f:(fun i ->
+            let (_, selectable) = List.nth_exn items i in
+            not selectable) then begin
+          io.output "Some choices are not selectable";
+          loop()
+        end
         else
-          let index = int_of_string raw_input in
-          let (name, selectable) = List.nth_exn items index in
-          if selectable then Indexes [index]
-          else begin
-            io.output (sprintf "%s is not selectable" name);
-            loop()
-          end
-      | Unlimited ->
-        io.output "or all, or skip";
-        match io.input() with
-        | "skip" -> Skip
-        | "all" ->
-          let indexes = List.filter_mapi items ~f:(fun i (_, selectable) ->
-              if selectable then Some i else None)
-          in Indexes indexes
-        | raw_input ->
-          let indexes = raw_input
-                        |> String.split ~on:','
-                        |> List.map ~f:String.strip
-                        |> List.filter ~f:(Fn.non String.is_empty)
-                        |> List.map ~f:int_of_string
-                        |> List.sort ~cmp:compare
-          in
-          if List.exists indexes ~f:(fun i ->
-              let (_, selectable) = List.nth_exn items i in
-              not selectable) then begin
-            io.output "Some choices are not selectable";
-            loop()
-          end
-          else
-            Indexes indexes
-    else Unselectable
+          Indexes indexes
   in
-  loop()
+  if List.exists items ~f:snd then loop() else Unselectable
 
 let create_console_io () = {
   input = read_line;
@@ -212,3 +208,41 @@ let draw_cards n player =
 
 let active_player game =
   List.nth_exn game.players game.active_player_index
+
+let play_one io game =
+  let card_to_item predicate card = (card_name card, predicate card) in
+  let skip_to_treasure () =
+    game.stat.actions <- 0;
+    game.stage <- Treasure
+  in
+  match game.stage with
+  | Action ->
+    if game.stat.actions > 0 then begin
+      match (active_player game).hand
+            |> List.map ~f:(card_to_item is_action)
+            |> choose io OptionalOne "Select an action card to play"
+      with
+      | Unselectable ->
+        io.output "No action card to play. Skip to treasure stage";
+        skip_to_treasure()
+      | Skip ->
+        io.output "Skip to treasure stage";
+        skip_to_treasure()
+      | Indexes indexes ->
+        let player = active_player game in
+        let (hand, played) = split_by_indexes player.hand indexes in
+        let card = List.hd_exn played in
+        player.hand <- hand;
+        player.played <- played @ player.played;
+        game.stat.actions <- game.stat.actions - 1;
+        "playing " ^ (card_name card) |> io.output;
+        match card with
+        | BasicActionCard (_, _, play) -> play game
+        | SelfTrashActionCard (_, _, play) -> play (game, false) |> ignore
+        | BasicTreasureCard (_, _, _) | BasicVictoryCard (_, _, _) -> assert false
+    end else begin
+      io.output "No action point. Skip to treasure stage";
+      skip_to_treasure()
+    end
+  | _ -> assert false
+      
