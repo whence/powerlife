@@ -128,16 +128,16 @@ let choose io requirement message items =
         |> io.output);
     match requirement with
     | MandatoryOne ->
-      let index = int_of_string (io.input()) in
+      let index = io.input () |> int_of_string in
       let (name, selectable) = List.nth_exn items index in
       if selectable then Indexes [index]
       else begin
         io.output (sprintf "%s is not selectable" name);
-        loop()
+        loop ()
       end
     | OptionalOne ->
       io.output "or skip";
-      let raw_input = io.input() in
+      let raw_input = io.input () in
       if raw_input = "skip" then Skip
       else
         let index = int_of_string raw_input in
@@ -145,11 +145,11 @@ let choose io requirement message items =
         if selectable then Indexes [index]
         else begin
           io.output (sprintf "%s is not selectable" name);
-          loop()
+          loop ()
         end
     | Unlimited ->
       io.output "or all, or skip";
-      match io.input() with
+      match io.input () with
       | "skip" -> Skip
       | "all" ->
         let indexes = List.filter_mapi items ~f:(fun i (_, selectable) ->
@@ -167,12 +167,12 @@ let choose io requirement message items =
             let (_, selectable) = List.nth_exn items i in
             not selectable) then begin
           io.output "Some choices are not selectable";
-          loop()
+          loop ()
         end
         else
           Indexes indexes
   in
-  if List.exists items ~f:snd then loop() else Unselectable
+  if List.exists items ~f:snd then loop () else Unselectable
 
 let create_console_io () = {
   input = read_line;
@@ -211,12 +211,19 @@ let active_player game =
 
 let play_one io game =
   let card_to_item predicate card = (card_name card, predicate card) in
-  let skip_to_treasure () =
-    game.stat.actions <- 0;
-    game.stage <- Treasure
+  let play_cards indexes =
+    let player = active_player game in
+    let (played, hand) = split_by_indexes player.hand indexes in
+    player.hand <- hand;
+    player.played <- played @ player.played;
+    played
   in
   match game.stage with
   | Action ->
+    let skip_to_next () =
+      game.stat.actions <- 0;
+      game.stage <- Treasure
+    in
     if game.stat.actions > 0 then begin
       match (active_player game).hand
             |> List.map ~f:(card_to_item is_action)
@@ -224,25 +231,50 @@ let play_one io game =
       with
       | Unselectable ->
         io.output "No action card to play. Skip to treasure stage";
-        skip_to_treasure()
+        skip_to_next ()
       | Skip ->
         io.output "Skip to treasure stage";
-        skip_to_treasure()
+        skip_to_next ()
       | Indexes indexes ->
-        let player = active_player game in
-        let (hand, played) = split_by_indexes player.hand indexes in
-        let card = List.hd_exn played in
-        player.hand <- hand;
-        player.played <- played @ player.played;
         game.stat.actions <- game.stat.actions - 1;
-        "playing " ^ (card_name card) |> io.output;
-        match card with
-        | BasicActionCard (_, _, play) -> play game
-        | SelfTrashActionCard (_, _, play) -> play (game, false) |> ignore
-        | BasicTreasureCard (_, _, _) | BasicVictoryCard (_, _, _) -> assert false
+        match play_cards indexes with
+        | [card] ->
+          "playing " ^ (card_name card) |> io.output;
+          begin match card with
+          | BasicActionCard (_, _, play) -> play game
+          | SelfTrashActionCard (_, _, play) -> play (game, false) |> ignore
+          | BasicTreasureCard (_, _, _) | BasicVictoryCard (_, _, _) -> assert false
+          end
+        | _ -> assert false
     end else begin
       io.output "No action point. Skip to treasure stage";
-      skip_to_treasure()
+      skip_to_next ()
+    end
+  | Treasure ->
+    let skip_to_next () =
+      game.stat.buys <- 0;
+      game.stage <- Buy
+    in
+    begin match (active_player game).hand
+          |> List.map ~f:(card_to_item is_treasure)
+          |> choose io Unlimited "Select treasure cards to play"
+    with
+    | Unselectable ->
+      io.output "No treasure card to play. Skip to buy stage";
+      skip_to_next ()
+    | Skip ->
+      io.output "Skip to buy stage";
+      skip_to_next ()
+    | Indexes indexes ->
+      let cards = play_cards indexes in
+      cards
+      |> List.map ~f:card_name
+      |> String.concat ~sep:","
+      |> (^) "playing "
+      |> io.output;
+      List.iter cards ~f:(function
+          | BasicTreasureCard (_, _, coins) -> game.stat.coins <- game.stat.coins + coins
+          | BasicActionCard (_, _, _) | SelfTrashActionCard (_, _, _) | BasicVictoryCard (_, _, _) -> assert false
+        )
     end
   | _ -> assert false
-      
