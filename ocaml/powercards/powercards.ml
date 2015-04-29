@@ -161,7 +161,7 @@ let choose io requirement message items =
                       |> List.map ~f:String.strip
                       |> List.filter ~f:(Fn.non String.is_empty)
                       |> List.map ~f:int_of_string
-                      |> List.sort ~cmp:compare
+                      |> List.sort ~cmp:Int.compare
         in
         if List.exists indexes ~f:(fun i ->
             let (_, selectable) = List.nth_exn items i in
