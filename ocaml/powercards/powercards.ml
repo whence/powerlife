@@ -28,12 +28,11 @@ and pile = {
   mutable size: int;
 }
 and card =
-  | BasicActionCard of string * int * (game -> unit)
-  | SelfTrashActionCard of string * int * (game * bool -> bool)
+  | BasicActionCard of string * int * (io -> game -> unit)
+  | SelfTrashActionCard of string * int * (io -> game * bool -> bool)
   | BasicTreasureCard of string * int * int
   | BasicVictoryCard of string * int * int
-
-type io = {
+and io = {
   input: unit -> string;
   output: string -> unit;
 }
@@ -49,7 +48,7 @@ let duchy = BasicVictoryCard ("Duchy", 5, 3)
 let province = BasicVictoryCard ("Province", 8, 6)
 
 let remodel =
-  let play game = () in
+  let play io game = () in
   BasicActionCard ("Remodel", 4, play)
 
 let create_player name =
@@ -241,8 +240,8 @@ let play_one io game =
         | [card] ->
           "playing " ^ (card_name card) |> io.output;
           begin match card with
-          | BasicActionCard (_, _, play) -> play game
-          | SelfTrashActionCard (_, _, play) -> play (game, false) |> ignore
+          | BasicActionCard (_, _, play) -> play io game
+          | SelfTrashActionCard (_, _, play) -> play io (game, false) |> ignore
           | BasicTreasureCard (_, _, _) | BasicVictoryCard (_, _, _) -> assert false
           end
         | _ -> assert false
