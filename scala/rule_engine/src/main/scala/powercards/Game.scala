@@ -36,16 +36,35 @@ class Player(val name: String) {
   var discard: Vector[Card] = Vector.empty
 }
 
-class Pile(val sample: Card, var size: Int)
+class Pile(val sample: Card, initialSize: Int)
 
-sealed abstract class Card {
-  def name: String
-  def cost: Int
+class Card(val name: String, val cost: Int, val feature: CardFeature)
+
+sealed abstract class CardFeature {
+  def isAction: Boolean
+  def isTreasure: Boolean
+  def isVictory: Boolean
 }
-case class BasicActionCard(name: String, cost: Int, play: (Game, IO) => Unit) extends Card
-case class SelfTrashActionCard(name: String, cost: Int, play: (Game, IO, Boolean) => Boolean) extends Card
-case class BasicTreasureCard(name: String, cost: Int, coins: Int) extends Card
-case class BasicVictoryCard(name: String, cost: Int, vps: Int) extends Card
+case class BasicAction(play: (Game, IO) => Unit) extends CardFeature {
+  val isAction = true
+  val isTreasure = false
+  val isVictory = false
+}
+case class SelfTrashAction(play: (Game, IO, Boolean) => Boolean) extends CardFeature {
+  val isAction = true
+  val isTreasure = false
+  val isVictory = false
+}
+case class BasicTreasure(coins: Int) extends CardFeature {
+  val isAction = false
+  val isTreasure = true
+  val isVictory = false
+}
+case class BasicVictory(vps: Int) extends CardFeature {
+  val isAction = false
+  val isTreasure = false
+  val isVictory = true
+}
 
 trait IO {
   def input(): String
@@ -66,36 +85,16 @@ class RecordedIO(inputs: Seq[String]) extends IO {
 }
 
 object Cards {
-  def isAction(card: Card): Boolean = card match {
-    case BasicActionCard(_, _, _) => true
-    case SelfTrashActionCard(_, _, _) => true
-    case BasicTreasureCard(_, _, _) => false
-    case BasicVictoryCard(_, _, _) => false
-  }
+  val copper = new Card("Copper", cost = 0, feature = BasicTreasure(coins = 1))
+  val silver = new Card("Silver", cost = 3, feature = BasicTreasure(coins = 2))
+  val gold = new Card("Gold", cost = 6, feature = BasicTreasure(coins = 3))
 
-  def isTreasure(card: Card): Boolean = card match {
-    case BasicActionCard(_, _, _) => false
-    case SelfTrashActionCard(_, _, _) => false
-    case BasicTreasureCard(_, _, _) => true
-    case BasicVictoryCard(_, _, _) => false
-  }
+  val estate = new Card("Estate", cost = 2, feature = BasicVictory(vps = 1))
+  val duchy = new Card("Duchy", cost = 5, feature = BasicVictory(vps = 3))
+  val province = new Card("Province", cost = 8, feature = BasicVictory(vps = 6))
 
-  def isVictory(card: Card): Boolean = card match {
-    case BasicActionCard(_, _, _) => false
-    case SelfTrashActionCard(_, _, _) => false
-    case BasicTreasureCard(_, _, _) => false
-    case BasicVictoryCard(_, _, _) => true
-  }
+  val remodel = new Card("Remodel", cost = 4, feature = BasicAction { (io, game) =>
 
-  val copper = BasicTreasureCard("Copper", cost = 0, coins = 1)
-  val silver = BasicTreasureCard("Silver", cost = 3, coins = 2)
-  val gold = BasicTreasureCard("Gold", cost = 6, coins = 3)
-
-  val estate = BasicVictoryCard("Estate", cost = 2, vps = 1)
-  val duchy = BasicVictoryCard("Duchy", cost = 5, vps = 3)
-  val province = BasicVictoryCard("Province", cost = 8, vps = 6)
-
-  val remodel = BasicActionCard("Remodel", cost = 4, (game, io) => {
   })
 }
 

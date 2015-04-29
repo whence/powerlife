@@ -7,7 +7,7 @@ class PowercardsTest extends FlatSpec with Matchers {
   }
 
   it should "match card type" in {
-    Cards.isAction(Cards.remodel) should be (true)
+    Cards.remodel.feature.isAction should be (true)
   }
 
   it should "equals cards" in {
