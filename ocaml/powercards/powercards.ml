@@ -2,6 +2,13 @@ open Core.Std
 
 type stage = Action | Treasure | Buy | Cleanup
 
+type io = {
+  input: unit -> string;
+  output: string -> unit;
+}
+type requirement = Unlimited | MandatoryOne | OptionalOne
+type choice = Unselectable | Skip | Indexes of int list
+
 type stat = {
   mutable actions: int;
   mutable buys: int;
@@ -32,12 +39,6 @@ and card =
   | SelfTrashActionCard of string * int * (io -> game * bool -> bool)
   | BasicTreasureCard of string * int * int
   | BasicVictoryCard of string * int * int
-and io = {
-  input: unit -> string;
-  output: string -> unit;
-}
-type requirement = Unlimited | MandatoryOne | OptionalOne
-type choice = Unselectable | Skip | Indexes of int list
 
 let copper = BasicTreasureCard ("Copper", 0, 1)
 let silver = BasicTreasureCard ("Silver", 3, 2)
