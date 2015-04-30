@@ -45,12 +45,12 @@ sealed abstract class CardFeature {
   def isTreasure: Boolean
   def isVictory: Boolean
 }
-case class BasicAction(play: (Game, IO) => Unit) extends CardFeature {
+case class BasicAction(play: (IO, Game) => Unit) extends CardFeature {
   val isAction = true
   val isTreasure = false
   val isVictory = false
 }
-case class SelfTrashAction(play: (Game, IO, Boolean) => Boolean) extends CardFeature {
+case class SelfTrashAction(play: (IO, Game, Boolean) => Boolean) extends CardFeature {
   val isAction = true
   val isTreasure = false
   val isVictory = false
@@ -94,7 +94,6 @@ object Cards {
   val province = new Card("Province", cost = 8, feature = BasicVictory(vps = 6))
 
   val remodel = new Card("Remodel", cost = 4, feature = BasicAction { (io, game) =>
-
   })
 }
 
@@ -108,4 +107,12 @@ object Dialog {
   case object NonSelectable
   case object Skip
   case class Indexes(indexes: Vector[Int])
+}
+
+object Utils {
+  def divide[A](items: Vector[A], indexes: Vector[Int]): (Vector[A], Vector[A]) = {
+    val selected = indexes.map(items(_))
+    val unselected = Range(0, items.length).diff(indexes).map(items(_)).toVector
+    (selected, unselected)
+  }
 }
