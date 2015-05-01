@@ -120,8 +120,7 @@ object Dialog {
       }
     }
 
-    @annotation.tailrec
-    def loop(): Choice = {
+    def ask(): Option[Choice] = {
       io.output(message)
       items.zipWithIndex.foreach {
         case ((name, selectable), i) =>
@@ -129,23 +128,22 @@ object Dialog {
       }
       requirement match {
         case MandatoryOne =>
-          selectOne(io.input()) match {
-            case Some(x) => x
-            case None => loop()
-          }
+          selectOne(io.input())
         case OptionalOne =>
           io.output("or skip")
           io.input() match {
-            case "skip" => Skip
-            case input =>
-              selectOne(input) match {
-                case Some(x) => x
-                case None => loop()
-              }
+            case "skip" => Some(Skip)
+            case input => selectOne(input)
           }
         case Unlimited =>
-
+          ???
       }
+    }
+
+    if (items.exists(_._2)) {
+      Utils.loopTil(ask)
+    } else {
+      NonSelectable
     }
   }
 }
@@ -167,5 +165,11 @@ object Utils {
     val selected = items(index)
     val unselected = items.patch(index, Nil, 1)
     (selected, unselected)
+  }
+
+  @annotation.tailrec
+  def loopTil[A](f: () => Option[A]): A = f() match {
+    case Some(x) => x
+    case None => loopTil(f)
   }
 }

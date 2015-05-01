@@ -113,6 +113,10 @@ let split_by_indexes xs indexes =
   let (yes, no, _) = List.foldi xs ~f:aux ~init:([], [], indexes) in
   (List.rev yes, List.rev no)
 
+let rec loop_til f = match f () with
+  | Some x -> x
+  | None -> loop_til f
+
 let choose io requirement message items =
   let select_one input =
     let index = int_of_string input in
@@ -139,37 +143,30 @@ let choose io requirement message items =
     else
       Some (Indexes indexes)
   in
-  let rec loop () =
+  let ask () =
     io.output message;
     List.iteri items ~f:(fun i item ->
         sprintf "[%d] %s %s" i (fst item) (if snd item then "(select)" else "")
         |> io.output);
     match requirement with
-    | MandatoryOne -> begin match select_one (io.input ()) with
-      | None -> loop ()
-      | Some x -> x
-      end
+    | MandatoryOne -> io.input () |> select_one
     | OptionalOne ->
       io.output "or skip";
       begin match io.input () with
-      | "skip" -> Skip
-      | input -> match select_one input with
-        | None -> loop ()
-        | Some x -> x
+      | "skip" -> Some Skip
+      | input -> select_one input
       end
     | Unlimited ->
       io.output "or all, or skip";
       match io.input () with
-      | "skip" -> Skip
+      | "skip" -> Some Skip
       | "all" ->
         let indexes = List.filter_mapi items ~f:(fun i (_, selectable) ->
             if selectable then Some i else None)
-        in Indexes indexes
-      | input -> match select_many input with
-        | None -> loop ()
-        | Some x -> x
+        in Some (Indexes indexes)
+      | input -> select_many input
   in
-  if List.exists items ~f:snd then loop () else Unselectable
+  if List.exists items ~f:snd then loop_til ask else Unselectable
 
 let create_console_io () = {
   input = read_line;
