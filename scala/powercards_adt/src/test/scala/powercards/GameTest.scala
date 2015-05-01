@@ -1,7 +1,8 @@
-import org.scalatest.{Matchers, FlatSpec}
-import powercards._
+package powercards
 
-class PowercardsTest extends FlatSpec with Matchers {
+import org.scalatest.{Matchers, FlatSpec}
+
+class GameTest extends FlatSpec with Matchers {
   it should "create game" in {
     val game = new Game(Seq("wes", "bec"))
   }
