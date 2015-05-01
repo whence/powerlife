@@ -34,23 +34,28 @@ and pile = {
   sample: card;
   mutable size: int;
 }
-and card =
-  | BasicActionCard of string * int * (io -> game -> unit)
-  | SelfTrashActionCard of string * int * (io -> game * bool -> bool)
-  | BasicTreasureCard of string * int * int
-  | BasicVictoryCard of string * int * int
+and card = {
+  title: string;
+  cost: int;
+  feature: card_feature;
+}
+and card_feature =
+  | BasicAction of (io -> game -> unit)
+  | SelfTrashAction of (io -> game * bool -> bool)
+  | BasicTreasure of int
+  | BasicVictory of int
 
-let copper = BasicTreasureCard ("Copper", 0, 1)
-let silver = BasicTreasureCard ("Silver", 3, 2)
-let gold = BasicTreasureCard ("Gold", 6, 3)
+let copper = { title = "Copper"; cost = 0; feature = BasicTreasure 1 }
+let silver = { title = "Silver"; cost = 3; feature = BasicTreasure 2 }
+let gold = { title = "Gold"; cost = 6; feature = BasicTreasure 3 }
 
-let estate = BasicVictoryCard ("Estate", 2, 1)
-let duchy = BasicVictoryCard ("Duchy", 5, 3)
-let province = BasicVictoryCard ("Province", 8, 6)
+let estate = { title = "Estate"; cost = 2; feature = BasicVictory 1 }
+let duchy = { title = "Duchy"; cost = 5; feature = BasicVictory 3 }
+let province = { title = "Province"; cost = 8; feature = BasicVictory 6 }
 
 let remodel =
   let play io game = () in
-  BasicActionCard ("Remodel", 4, play)
+  { title = "Remodel"; cost = 4; feature = BasicAction play }
 
 let create_player name =
   let deck = 
@@ -80,37 +85,25 @@ let create_game names =
     stat = { actions = 1; buys = 1; coins = 0 };
   }
 
-let card_name = function
-  | BasicActionCard (name, _, _) -> name
-  | SelfTrashActionCard (name, _, _) -> name
-  | BasicTreasureCard (name, _, _) -> name
-  | BasicVictoryCard (name, _, _) -> name
+let is_action card = match card.feature with
+  | BasicAction _ -> true
+  | SelfTrashAction _ -> true
+  | BasicTreasure _ -> false
+  | BasicVictory _ -> false
 
-let card_cost = function
-  | BasicActionCard (_, cost, _) -> cost
-  | SelfTrashActionCard (_, cost, _) -> cost
-  | BasicTreasureCard (_, cost, _) -> cost
-  | BasicVictoryCard (_, cost, _) -> cost
+let is_treasure card = match card.feature with
+  | BasicAction _ -> false
+  | SelfTrashAction _ -> false
+  | BasicTreasure _ -> true
+  | BasicVictory _ -> false
 
-let is_action = function
-  | BasicActionCard (_, _, _) -> true
-  | SelfTrashActionCard (_, _, _) -> true
-  | BasicTreasureCard (_, _, _) -> false
-  | BasicVictoryCard (_, _, _) -> false
+let is_victory card = match card.feature with
+  | BasicAction _ -> false
+  | SelfTrashAction _ -> false
+  | BasicTreasure _ -> false
+  | BasicVictory _ -> true
 
-let is_treasure = function
-  | BasicActionCard (_, _, _) -> false
-  | SelfTrashActionCard (_, _, _) -> false
-  | BasicTreasureCard (_, _, _) -> true
-  | BasicVictoryCard (_, _, _) -> false
-
-let is_victory = function
-  | BasicActionCard (_, _, _) -> false
-  | SelfTrashActionCard (_, _, _) -> false
-  | BasicTreasureCard (_, _, _) -> false
-  | BasicVictoryCard (_, _, _) -> true
-
-let same_kind x y = (card_name x) = (card_name y)
+let same_kind x y = x.title = y.title
 
 let split_by_indexes xs indexes =
   let aux i acc x = match acc with
@@ -210,7 +203,7 @@ let active_player game =
   List.nth_exn game.players game.active_player_index
 
 let play_one io game =
-  let card_to_item predicate card = (card_name card, predicate card) in
+  let card_to_item predicate card = (card.title, predicate card) in
   let play_cards indexes =
     let player = active_player game in
     let (played, hand) = split_by_indexes player.hand indexes in
@@ -239,11 +232,11 @@ let play_one io game =
         game.stat.actions <- game.stat.actions - 1;
         match play_cards indexes with
         | [card] ->
-          "playing " ^ (card_name card) |> io.output;
-          begin match card with
-          | BasicActionCard (_, _, play) -> play io game
-          | SelfTrashActionCard (_, _, play) -> play io (game, false) |> ignore
-          | BasicTreasureCard (_, _, _) | BasicVictoryCard (_, _, _) -> assert false
+          "playing " ^ card.title |> io.output;
+          begin match card.feature with
+          | BasicAction play -> play io game
+          | SelfTrashAction play -> play io (game, false) |> ignore
+          | BasicTreasure _ | BasicVictory _ -> assert false
           end
         | _ -> assert false
     end else begin
@@ -268,13 +261,13 @@ let play_one io game =
     | Indexes indexes ->
       let cards = play_cards indexes in
       cards
-      |> List.map ~f:card_name
+      |> List.map ~f:(fun c -> c.title)
       |> String.concat ~sep:","
       |> (^) "playing "
       |> io.output;
-      List.iter cards ~f:(function
-          | BasicTreasureCard (_, _, coins) -> game.stat.coins <- game.stat.coins + coins
-          | BasicActionCard (_, _, _) | SelfTrashActionCard (_, _, _) | BasicVictoryCard (_, _, _) -> assert false
+      List.iter cards ~f:(fun c -> match c.feature with
+          | BasicTreasure coins -> game.stat.coins <- game.stat.coins + coins
+          | BasicAction _ | SelfTrashAction _ | BasicVictory _ -> assert false
         )
     end
   | _ -> assert false
