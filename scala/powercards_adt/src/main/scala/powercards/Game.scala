@@ -99,14 +99,55 @@ object Cards {
 
 object Dialog {
   sealed abstract class Requirement
-  case object Unlimited
-  case object MandatoryOne
-  case object OptionalOne
+  case object Unlimited extends Requirement
+  case object MandatoryOne extends Requirement
+  case object OptionalOne extends Requirement
 
   sealed abstract class Choice
-  case object NonSelectable
-  case object Skip
-  case class Indexes(indexes: Vector[Int])
+  case object NonSelectable extends Choice
+  case object Skip extends Choice
+  case class Index(index: Int) extends Choice
+  case class Indexes(indexes: Vector[Int]) extends Choice
+
+  def choose(io: IO, requirement: Requirement, message: String, items: Vector[(String, Boolean)]): Choice = {
+    def selectOne(input: String): Option[Choice] = {
+      val index = io.input().toInt
+      items(index) match {
+        case (_, true) => Some(Index(index))
+        case (name, false) =>
+          io.output(s"$name is not selectable")
+          None
+      }
+    }
+
+    @annotation.tailrec
+    def loop(): Choice = {
+      io.output(message)
+      items.zipWithIndex.foreach {
+        case ((name, selectable), i) =>
+          io.output(s"[$i] $name ${if (selectable) "(select)" else ""}")
+      }
+      requirement match {
+        case MandatoryOne =>
+          selectOne(io.input()) match {
+            case Some(x) => x
+            case None => loop()
+          }
+        case OptionalOne =>
+          io.output("or skip")
+          io.input() match {
+            case "skip" => Skip
+            case input =>
+              selectOne(input) match {
+                case Some(x) => x
+                case None => loop()
+              }
+          }
+        case Unlimited =>
+
+      }
+    }
+  }
 }
 
 object Utils {

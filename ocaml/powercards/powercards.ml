@@ -114,32 +114,49 @@ let split_by_indexes xs indexes =
   (List.rev yes, List.rev no)
 
 let choose io requirement message items =
+  let select_one input =
+    let index = int_of_string input in
+    match List.nth_exn items index with
+    | (_, true) -> Some (Indexes [index])
+    | (name, false) ->
+      io.output (sprintf "%s is not selectable" name);
+      None
+  in
+  let select_many input =
+    let indexes = input
+                  |> String.split ~on:','
+                  |> List.map ~f:String.strip
+                  |> List.filter ~f:(Fn.non String.is_empty)
+                  |> List.map ~f:int_of_string
+                  |> List.sort ~cmp:Int.compare
+    in
+    if List.exists indexes ~f:(fun i ->
+        let (_, selectable) = List.nth_exn items i in
+        not selectable) then begin
+      io.output "Some choices are not selectable";
+      None
+    end
+    else
+      Some (Indexes indexes)
+  in
   let rec loop () =
     io.output message;
     List.iteri items ~f:(fun i item ->
         sprintf "[%d] %s %s" i (fst item) (if snd item then "(select)" else "")
         |> io.output);
     match requirement with
-    | MandatoryOne ->
-      let index = io.input () |> int_of_string in
-      let (name, selectable) = List.nth_exn items index in
-      if selectable then Indexes [index]
-      else begin
-        io.output (sprintf "%s is not selectable" name);
-        loop ()
+    | MandatoryOne -> begin match select_one (io.input ()) with
+      | None -> loop ()
+      | Some x -> x
       end
     | OptionalOne ->
       io.output "or skip";
-      let raw_input = io.input () in
-      if raw_input = "skip" then Skip
-      else
-        let index = int_of_string raw_input in
-        let (name, selectable) = List.nth_exn items index in
-        if selectable then Indexes [index]
-        else begin
-          io.output (sprintf "%s is not selectable" name);
-          loop ()
-        end
+      begin match io.input () with
+      | "skip" -> Skip
+      | input -> match select_one input with
+        | None -> loop ()
+        | Some x -> x
+      end
     | Unlimited ->
       io.output "or all, or skip";
       match io.input () with
@@ -148,22 +165,9 @@ let choose io requirement message items =
         let indexes = List.filter_mapi items ~f:(fun i (_, selectable) ->
             if selectable then Some i else None)
         in Indexes indexes
-      | raw_input ->
-        let indexes = raw_input
-                      |> String.split ~on:','
-                      |> List.map ~f:String.strip
-                      |> List.filter ~f:(Fn.non String.is_empty)
-                      |> List.map ~f:int_of_string
-                      |> List.sort ~cmp:Int.compare
-        in
-        if List.exists indexes ~f:(fun i ->
-            let (_, selectable) = List.nth_exn items i in
-            not selectable) then begin
-          io.output "Some choices are not selectable";
-          loop ()
-        end
-        else
-          Indexes indexes
+      | input -> match select_many input with
+        | None -> loop ()
+        | Some x -> x
   in
   if List.exists items ~f:snd then loop () else Unselectable
 
