@@ -120,11 +120,19 @@ object Dialog {
       }
     }
 
+    def selectMany(input: String): Option[Choice] = {
+      val indexes = input.split(',').map(_.trim).withFilter(_.nonEmpty).map(_.toInt).sorted
+      val nonSelectable = indexes.map(items(_)).withFilter(!_._2).map(_._1)
+      if (nonSelectable.nonEmpty) {
+        io.output(s"${nonSelectable.mkString(", ")} are not selectable")
+        None
+      } else Some(Indexes(indexes.toVector))
+    }
+
     def ask(): Option[Choice] = {
       io.output(message)
-      items.zipWithIndex.foreach {
-        case ((name, selectable), i) =>
-          io.output(s"[$i] $name ${if (selectable) "(select)" else ""}")
+      for (((name, selectable), i) <- items.zipWithIndex) {
+        io.output(s"[$i] $name ${if (selectable) "(select)" else ""}")
       }
       requirement match {
         case MandatoryOne =>

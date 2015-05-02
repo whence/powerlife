@@ -134,14 +134,20 @@ let choose io requirement message items =
                   |> List.map ~f:int_of_string
                   |> List.sort ~cmp:Int.compare
     in
-    if List.exists indexes ~f:(fun i ->
-        let (_, selectable) = List.nth_exn items i in
-        not selectable) then begin
-      io.output "Some choices are not selectable";
+    let nonSelectables = indexes
+                         |> List.filter_map ~f:(fun i ->
+                             let (title, selectable) = List.nth_exn items i in
+                             if selectable then None else Some title)
+    in
+    if List.is_empty nonSelectables then
+      Some (Indexes indexes)
+    else begin
+      nonSelectables
+      |> String.concat ~sep:", "
+      |> sprintf "%s are not selectable"
+      |> io.output;
       None
     end
-    else
-      Some (Indexes indexes)
   in
   let ask () =
     io.output message;
