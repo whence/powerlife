@@ -46,99 +46,12 @@ and card_feature =
   | BasicVictory of int
   | DynamicVictory of (player -> int)
 
-let copper = { title = "Copper"; cost = 0; feature = BasicTreasure 1 }
-let silver = { title = "Silver"; cost = 3; feature = BasicTreasure 2 }
-let gold = { title = "Gold"; cost = 6; feature = BasicTreasure 3 }
-
-let estate = { title = "Estate"; cost = 2; feature = BasicVictory 1 }
-let duchy = { title = "Duchy"; cost = 5; feature = BasicVictory 3 }
-let province = { title = "Province"; cost = 8; feature = BasicVictory 6 }
-
-let garden =
-  let vps p =
-    let cnt = [p.deck; p.hand; p.played; p.discard]
-              |> List.map ~f:List.length |> List.fold ~init:0 ~f:(+) in
-    cnt / 10
-  in { title ="Garden"; cost = 4; feature = DynamicVictory vps }
-
-let remodel =
-  let play _ _ = () in
-  { title = "Remodel"; cost = 4; feature = BasicAction play }
-
-let create_player name =
-  let deck = 
-    let estates = List.init 3 ~f:(fun _ -> estate) in
-    let coppers = List.init 7 ~f:(fun _ -> copper) in
-    List.permute (estates @ coppers)
-  in
-  { name;
-    deck = List.take deck 5;
-    hand = List.drop deck 5;
-    played = [];
-    discard = [];
-  }
-
-let create_start_piles kingdom_cards player_cnt =
-  let pile size sample = { sample; size } in
-  let treasures = [pile (60 - player_cnt * 7) copper; pile 40 silver; pile 30 gold] in
-  let victories =
-    let n = match player_cnt with
-      | 2 -> 8
-      | 3 | 4 -> 12
-      | _ -> assert false
-    in [pile n estate; pile n duchy; pile n province]
-  in
-  let kingdoms = List.map kingdom_cards ~f:(pile 10) in
-  treasures @ victories @ kingdoms
-
-let create_game names =
-  let player_cnt = List.length names in
-  { players = List.map names ~f:create_player;
-    active_player_index = Random.int player_cnt;
-    piles = create_start_piles [remodel] player_cnt;
-    trash = [];
-    stage = Action;
-    stat = { actions = 1; buys = 1; coins = 0 };
-  }
-
-let is_action card = match card.feature with
-  | BasicAction _ -> true
-  | SelfTrashAction _ -> true
-  | BasicTreasure _ -> false
-  | BasicVictory _ -> false
-  | DynamicVictory _ -> false
-
-let is_treasure card = match card.feature with
-  | BasicAction _ -> false
-  | SelfTrashAction _ -> false
-  | BasicTreasure _ -> true
-  | BasicVictory _ -> false
-  | DynamicVictory _ -> false
-
-let is_victory card = match card.feature with
-  | BasicAction _ -> false
-  | SelfTrashAction _ -> false
-  | BasicTreasure _ -> false
-  | BasicVictory _ -> true
-  | DynamicVictory _ -> true
-
-let same_kind x y = x.title = y.title
-
-let find_pile game card = game.piles |> List.find_exn ~f:(fun p -> same_kind p.sample card)
-
-let pile_empty pile = pile.size = 0
-
-let split_by_indexes xs indexes =
-  let aux i acc x = match acc with
-    | (yes, no, hd :: tl) when i = hd -> (x :: yes, no, tl)
-    | (yes, no, l) -> (yes, x :: no, l)
-  in
-  let (yes, no, _) = List.foldi xs ~f:aux ~init:([], [], indexes) in
-  (List.rev yes, List.rev no)
-
 let rec loop_til ~f = match f () with
   | Some x -> x
   | None -> loop_til ~f
+
+let active_player game =
+  List.nth_exn game.players game.active_player_index
 
 let choose io requirement message items =
   let select_one input =
@@ -197,21 +110,74 @@ let choose io requirement message items =
   in
   if List.exists items ~f:snd then loop_til ~f:ask else Unselectable
 
-let create_console_io () = {
-  input = read_line;
-  output = print_endline;
-}
+let copper = { title = "Copper"; cost = 0; feature = BasicTreasure 1 }
+let silver = { title = "Silver"; cost = 3; feature = BasicTreasure 2 }
+let gold = { title = "Gold"; cost = 6; feature = BasicTreasure 3 }
 
-let create_recorded_io inputs =
-  let inputs = ref inputs in
-  let outputs = ref [] in
-  let input () = match !inputs with
-    | [] -> failwith "no more recorded input to use"
-    | hd :: tl -> inputs := tl; hd
+let estate = { title = "Estate"; cost = 2; feature = BasicVictory 1 }
+let duchy = { title = "Duchy"; cost = 5; feature = BasicVictory 3 }
+let province = { title = "Province"; cost = 8; feature = BasicVictory 6 }
+
+let create_player name =
+  let deck = 
+    let estates = List.init 3 ~f:(fun _ -> estate) in
+    let coppers = List.init 7 ~f:(fun _ -> copper) in
+    List.permute (estates @ coppers)
   in
-  let output message = outputs := message :: !outputs in
-  let dump_outputs () = List.rev !outputs in
-  ({ input; output }, dump_outputs)
+  { name;
+    deck = List.take deck 5;
+    hand = List.drop deck 5;
+    played = [];
+    discard = [];
+  }
+
+let create_start_piles kingdom_cards player_cnt =
+  let pile size sample = { sample; size } in
+  let treasures = [pile (60 - player_cnt * 7) copper; pile 40 silver; pile 30 gold] in
+  let victories =
+    let n = match player_cnt with
+      | 2 -> 8
+      | 3 | 4 -> 12
+      | _ -> assert false
+    in [pile n estate; pile n duchy; pile n province]
+  in
+  let kingdoms = List.map kingdom_cards ~f:(pile 10) in
+  treasures @ victories @ kingdoms
+
+let is_action card = match card.feature with
+  | BasicAction _ -> true
+  | SelfTrashAction _ -> true
+  | BasicTreasure _ -> false
+  | BasicVictory _ -> false
+  | DynamicVictory _ -> false
+
+let is_treasure card = match card.feature with
+  | BasicAction _ -> false
+  | SelfTrashAction _ -> false
+  | BasicTreasure _ -> true
+  | BasicVictory _ -> false
+  | DynamicVictory _ -> false
+
+let is_victory card = match card.feature with
+  | BasicAction _ -> false
+  | SelfTrashAction _ -> false
+  | BasicTreasure _ -> false
+  | BasicVictory _ -> true
+  | DynamicVictory _ -> true
+
+let same_kind x y = x.title = y.title
+
+let find_pile game card = game.piles |> List.find_exn ~f:(fun p -> same_kind p.sample card)
+
+let pile_empty pile = pile.size = 0
+
+let split_by_indexes xs indexes =
+  let aux i acc x = match acc with
+    | (yes, no, hd :: tl) when i = hd -> (x :: yes, no, tl)
+    | (yes, no, l) -> (yes, x :: no, l)
+  in
+  let (yes, no, _) = List.foldi xs ~f:aux ~init:([], [], indexes) in
+  (List.rev yes, List.rev no)
 
 let rec draw_cards_loop n_remain acc =
   if n_remain = 0 then acc
@@ -228,9 +194,6 @@ let draw_cards n player =
   player.hand <- hand;
   player.discard <- discard;
   drawed
-
-let active_player game =
-  List.nth_exn game.players game.active_player_index
 
 let is_ended game =
   let cond1 () = find_pile game province |> pile_empty in
@@ -272,8 +235,7 @@ let play_one io game =
     player.discard <- pile.sample :: player.discard;
     pile.sample
   in
-  match game.stage with
-  | Action ->
+  let play_action () =
     let skip_to_next () =
       game.stat.actions <- 0;
       game.stage <- Treasure
@@ -304,7 +266,8 @@ let play_one io game =
       io.output "No action point. Skip to treasure stage";
       skip_to_next ()
     end
-  | Treasure ->
+  in
+  let play_treasure () =
     let skip_to_next () =
       game.stat.buys <- 0;
       game.stage <- Buy
@@ -332,7 +295,8 @@ let play_one io game =
             assert false
         )
     end
-  | Buy ->
+  in
+  let play_buy () =
     let skip_to_next () =
       game.stat.coins <- 0;
       game.stage <- Cleanup
@@ -358,7 +322,8 @@ let play_one io game =
       io.output "No more buys. Skip to cleanup stage";
       skip_to_next ()
     end
-  | Cleanup ->
+  in
+  let play_cleanup () =
     let player = active_player game in
     player.discard <- player.played @ player.hand @ player.discard;
     player.played <- [];
@@ -370,6 +335,12 @@ let play_one io game =
     game.stat.actions <- 1;
     game.stat.buys <- 1;
     game.stat.coins <- 0
+  in
+  match game.stage with
+  | Action -> play_action ()
+  | Treasure -> play_treasure ()
+  | Buy -> play_buy ()
+  | Cleanup -> play_cleanup ()
 
 let play_til_end io game =
   let one () =
@@ -379,6 +350,80 @@ let play_til_end io game =
   loop_til ~f:one
   |> List.iter ~f:(fun (name, vps, winner) ->
       sprintf "%s: %d %s" name vps (if winner then "(win)" else "") |> io.output)
+
+let garden =
+  let vps p =
+    let cnt = [p.deck; p.hand; p.played; p.discard]
+              |> List.map ~f:List.length |> List.fold ~init:0 ~f:(+) in
+    cnt / 10
+  in { title ="Garden"; cost = 4; feature = DynamicVictory vps }
+
+let remodel =
+  let play io game =
+    let player = active_player game in
+    let trash_card () =
+      match player.hand
+            |> List.map ~f:(fun c -> (c.title, true))
+            |> choose io MandatoryOne "Select a card to trash"
+      with
+      | Unselectable ->
+        io.output "No card in hand to trash";
+        None
+      | Indexes indexes ->
+        begin match split_by_indexes player.hand indexes with
+        | ([card], hand) ->
+          player.hand <- hand;
+          game.trash <- card :: game.trash;
+          "Trashed " ^ card.title |> io.output;
+          Some card
+        | (_, _) -> assert false
+        end
+      | Skip -> assert false
+    in
+    let gain_card max_cost =
+      match game.piles
+            |> List.map ~f:(fun p -> (p.sample.title, not (pile_empty p) && p.sample.cost <= max_cost))
+            |> choose io MandatoryOne "Select a pile to gain"
+      with
+      | Unselectable ->
+        io.output "No pile available to gain";
+      | Indexes [index] ->
+        let pile = List.nth_exn game.piles index in
+        pile.size <- pile.size - 1;
+        player.discard <- pile.sample :: player.discard;
+        "Gained " ^ pile.sample.title |> io.output;
+      | Indexes _ | Skip -> assert false
+    in
+    match trash_card () with
+    | Some card -> gain_card (card.cost + 2)
+    | None -> ()
+  in { title = "Remodel"; cost = 4; feature = BasicAction play }
+
+let create_console_io () = {
+  input = read_line;
+  output = print_endline;
+}
+
+let create_recorded_io inputs =
+  let inputs = ref inputs in
+  let outputs = ref [] in
+  let input () = match !inputs with
+    | [] -> failwith "no more recorded input to use"
+    | hd :: tl -> inputs := tl; hd
+  in
+  let output message = outputs := message :: !outputs in
+  let dump_outputs () = List.rev !outputs in
+  ({ input; output }, dump_outputs)
+
+let create_game names =
+  let player_cnt = List.length names in
+  { players = List.map names ~f:create_player;
+    active_player_index = Random.int player_cnt;
+    piles = create_start_piles [remodel; garden] player_cnt;
+    trash = [];
+    stage = Action;
+    stat = { actions = 1; buys = 1; coins = 0 };
+  }
 
 let main () =
   let io = create_console_io () in
