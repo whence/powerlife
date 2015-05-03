@@ -44,6 +44,7 @@ and card_feature =
   | SelfTrashAction of (io -> game * bool -> bool)
   | BasicTreasure of int
   | BasicVictory of int
+  | DynamicVictory of (player -> int)
 
 let copper = { title = "Copper"; cost = 0; feature = BasicTreasure 1 }
 let silver = { title = "Silver"; cost = 3; feature = BasicTreasure 2 }
@@ -53,8 +54,15 @@ let estate = { title = "Estate"; cost = 2; feature = BasicVictory 1 }
 let duchy = { title = "Duchy"; cost = 5; feature = BasicVictory 3 }
 let province = { title = "Province"; cost = 8; feature = BasicVictory 6 }
 
+let garden =
+  let vps p =
+    let cnt = [p.deck; p.hand; p.played; p.discard]
+              |> List.map ~f:List.length |> List.fold ~init:0 ~f:(+) in
+    cnt / 10
+  in { title ="Garden"; cost = 4; feature = DynamicVictory vps }
+
 let remodel =
-  let play io game = () in
+  let play _ _ = () in
   { title = "Remodel"; cost = 4; feature = BasicAction play }
 
 let create_player name =
@@ -70,16 +78,24 @@ let create_player name =
     discard = [];
   }
 
-let create_start_piles kingdom_cards =
+let create_start_piles kingdom_cards player_cnt =
   let pile size sample = { sample; size } in
-  let commons = [pile 60 copper; pile 12 estate] in
+  let treasures = [pile (60 - player_cnt * 7) copper; pile 40 silver; pile 30 gold] in
+  let victories =
+    let n = match player_cnt with
+      | 2 -> 8
+      | 3 | 4 -> 12
+      | _ -> assert false
+    in [pile n estate; pile n duchy; pile n province]
+  in
   let kingdoms = List.map kingdom_cards ~f:(pile 10) in
-  commons @ kingdoms
+  treasures @ victories @ kingdoms
 
 let create_game names =
+  let player_cnt = List.length names in
   { players = List.map names ~f:create_player;
-    active_player_index = Random.int (List.length names);
-    piles = create_start_piles [remodel];
+    active_player_index = Random.int player_cnt;
+    piles = create_start_piles [remodel] player_cnt;
     trash = [];
     stage = Action;
     stat = { actions = 1; buys = 1; coins = 0 };
@@ -90,20 +106,27 @@ let is_action card = match card.feature with
   | SelfTrashAction _ -> true
   | BasicTreasure _ -> false
   | BasicVictory _ -> false
+  | DynamicVictory _ -> false
 
 let is_treasure card = match card.feature with
   | BasicAction _ -> false
   | SelfTrashAction _ -> false
   | BasicTreasure _ -> true
   | BasicVictory _ -> false
+  | DynamicVictory _ -> false
 
 let is_victory card = match card.feature with
   | BasicAction _ -> false
   | SelfTrashAction _ -> false
   | BasicTreasure _ -> false
   | BasicVictory _ -> true
+  | DynamicVictory _ -> true
 
 let same_kind x y = x.title = y.title
+
+let find_pile game card = game.piles |> List.find_exn ~f:(fun p -> same_kind p.sample card)
+
+let pile_empty pile = pile.size = 0
 
 let split_by_indexes xs indexes =
   let aux i acc x = match acc with
@@ -113,9 +136,9 @@ let split_by_indexes xs indexes =
   let (yes, no, _) = List.foldi xs ~f:aux ~init:([], [], indexes) in
   (List.rev yes, List.rev no)
 
-let rec loop_til f = match f () with
+let rec loop_til ~f = match f () with
   | Some x -> x
-  | None -> loop_til f
+  | None -> loop_til ~f
 
 let choose io requirement message items =
   let select_one input =
@@ -129,7 +152,7 @@ let choose io requirement message items =
   let select_many input =
     let indexes = input
                   |> String.split ~on:','
-                  |> List.map ~f:String.strip
+                  |> List.map ~f:(String.strip ?drop:None)
                   |> List.filter ~f:(Fn.non String.is_empty)
                   |> List.map ~f:int_of_string
                   |> List.sort ~cmp:Int.compare
@@ -172,7 +195,7 @@ let choose io requirement message items =
         in Some (Indexes indexes)
       | input -> select_many input
   in
-  if List.exists items ~f:snd then loop_til ask else Unselectable
+  if List.exists items ~f:snd then loop_til ~f:ask else Unselectable
 
 let create_console_io () = {
   input = read_line;
@@ -209,6 +232,30 @@ let draw_cards n player =
 let active_player game =
   List.nth_exn game.players game.active_player_index
 
+let is_ended game =
+  let cond1 () = find_pile game province |> pile_empty in
+  let cond2 () = game.piles |> List.count ~f:pile_empty |> (<=) 3 in
+  cond1 () || cond2 ()
+
+let end_stat game =
+  let card_vps p c = match c.feature with
+    | BasicAction _ | SelfTrashAction _ | BasicTreasure _ -> 0
+    | BasicVictory x -> x
+    | DynamicVictory f -> f p
+  in
+  let player_vps p =
+    [p.deck; p.hand; p.played; p.discard]
+    |> List.concat
+    |> List.fold ~init:0 ~f:(fun acc c -> acc + (card_vps p c))
+  in
+  let stats = game.players
+              |> List.map ~f:(fun p -> (p.name, player_vps p))
+              |> List.sort ~cmp:(fun (_, vps1) (_, vps2) -> Int.compare vps1 vps2)
+              |> List.rev
+  in
+  let max_vps = List.hd_exn stats |> snd in
+  stats |> List.map ~f:(fun (name, vps) -> (name, vps, (vps = max_vps)))
+
 let play_one io game =
   let card_to_item predicate card = (card.title, predicate card) in
   let play_cards indexes =
@@ -217,6 +264,13 @@ let play_one io game =
     player.hand <- hand;
     player.played <- played @ player.played;
     played
+  in
+  let buy_card index =
+    let player = active_player game in
+    let pile = List.nth_exn game.piles index in
+    pile.size <- pile.size - 1;
+    player.discard <- pile.sample :: player.discard;
+    pile.sample
   in
   match game.stage with
   | Action ->
@@ -243,7 +297,7 @@ let play_one io game =
           begin match card.feature with
           | BasicAction play -> play io game
           | SelfTrashAction play -> play io (game, false) |> ignore
-          | BasicTreasure _ | BasicVictory _ -> assert false
+          | BasicTreasure _ | BasicVictory _ | DynamicVictory _ -> assert false
           end
         | _ -> assert false
     end else begin
@@ -274,7 +328,59 @@ let play_one io game =
       |> io.output;
       List.iter cards ~f:(fun c -> match c.feature with
           | BasicTreasure coins -> game.stat.coins <- game.stat.coins + coins
-          | BasicAction _ | SelfTrashAction _ | BasicVictory _ -> assert false
+          | BasicAction _ | SelfTrashAction _ | BasicVictory _ | DynamicVictory _ ->
+            assert false
         )
     end
-  | _ -> assert false
+  | Buy ->
+    let skip_to_next () =
+      game.stat.coins <- 0;
+      game.stage <- Cleanup
+    in
+    if game.stat.buys > 0 then begin
+      match game.piles
+            |> List.map ~f:(fun p -> (p.sample.title, p.size > 0 && p.sample.cost <= game.stat.coins))
+            |> choose io OptionalOne "Select a pile to buy"
+      with
+      | Unselectable ->
+        io.output "No card to buys. Skip to cleanup stage";
+        skip_to_next ()
+      | Skip ->
+        io.output "Skip to cleanup stage";
+        skip_to_next ()
+      | Indexes [index] ->
+        game.stat.buys <- game.stat.buys - 1;
+        let card = buy_card index in
+        game.stat.coins <- game.stat.coins - card.cost;
+        "Bought " ^ card.title |> io.output
+      | Indexes _ -> assert false
+    end else begin
+      io.output "No more buys. Skip to cleanup stage";
+      skip_to_next ()
+    end
+  | Cleanup ->
+    let player = active_player game in
+    player.discard <- player.played @ player.hand @ player.discard;
+    player.played <- [];
+    player.hand <- [];
+    draw_cards 5 player |> ignore;
+    game.active_player_index <- (if game.active_player_index = (List.length game.players) - 1
+                                 then 0 else game.active_player_index + 1);
+    game.stage <- Action;
+    game.stat.actions <- 1;
+    game.stat.buys <- 1;
+    game.stat.coins <- 0
+
+let play_til_end io game =
+  let one () =
+    play_one io game;
+    if is_ended game then Some (end_stat game) else None
+  in
+  loop_til ~f:one
+  |> List.iter ~f:(fun (name, vps, winner) ->
+      sprintf "%s: %d %s" name vps (if winner then "(win)" else "") |> io.output)
+
+let main () =
+  let io = create_console_io () in
+  let game = create_game ["wes";"bec"] in
+  play_til_end io game

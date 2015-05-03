@@ -139,6 +139,7 @@ public class Game {
     Cards.drawCards(getActivePlayer(), 5, dialog.inout());
     getActivePlayer().deactivate();
     nextActivePlayer();
+    stage = Stage.ACTION;
     getActivePlayer().activate();
   }
 

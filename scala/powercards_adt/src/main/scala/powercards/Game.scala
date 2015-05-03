@@ -144,7 +144,14 @@ object Dialog {
             case input => selectOne(input)
           }
         case Unlimited =>
-          ???
+          io.output("or all, or skip")
+          io.input() match {
+            case "skip" => Some(Skip)
+            case "all" =>
+              val indexes = items.zipWithIndex.withFilter(_._1._2).map(_._2)
+              Some(Indexes(indexes))
+            case input => selectMany(input)
+          }
       }
     }
 
