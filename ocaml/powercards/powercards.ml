@@ -50,6 +50,8 @@ let rec loop_til ~f = match f () with
   | Some x -> x
   | None -> loop_til ~f
 
+let all_preds predicates x = List.for_all predicates ~f:(fun p -> p x)
+
 let active_player game =
   List.nth_exn game.players game.active_player_index
 
@@ -221,13 +223,11 @@ let end_stat game =
 
 let card_to_item predicate card = (card.title, predicate card)
 
-let pile_to_item predicates pile =
-  let selectable = List.for_all predicates ~f:(fun p -> p pile) in
-  (pile.sample.title, selectable)
+let pile_to_item predicate pile = (pile.sample.title, predicate pile)
 
-let gain_card io game player predicates =
+let gain_card io game player predicate =
   match game.piles
-        |> List.map ~f:(pile_to_item predicates)
+        |> List.map ~f:(pile_to_item predicate)
         |> choose io MandatoryOne "Select a pile to gain"
   with
   | Unselectable ->
@@ -242,10 +242,10 @@ let gain_card io game player predicates =
 let play_one io game =
   let play_cards indexes =
     let player = active_player game in
-    let (played, hand) = split_by_indexes player.hand indexes in
+    let (cards, hand) = split_by_indexes player.hand indexes in
     player.hand <- hand;
-    player.played <- played @ player.played;
-    played
+    player.played <- cards @ player.played;
+    cards
   in
   let buy_card index =
     let player = active_player game in
@@ -255,7 +255,7 @@ let play_one io game =
     pile.sample
   in
   let play_action () =
-    let skip_to_next () =
+    let skip () =
       game.stat.actions <- 0;
       game.stage <- Treasure
     in
@@ -266,15 +266,15 @@ let play_one io game =
       with
       | Unselectable ->
         io.output "No action card to play. Skip to treasure stage";
-        skip_to_next ()
+        skip ()
       | Skip ->
         io.output "Skip to treasure stage";
-        skip_to_next ()
+        skip ()
       | Indexes indexes ->
         game.stat.actions <- game.stat.actions - 1;
         match play_cards indexes with
         | [card] ->
-          "playing " ^ card.title |> io.output;
+          "Playing " ^ card.title |> io.output;
           begin match card.feature with
           | BasicAction play -> play io game
           | SelfTrashAction play -> play io (game, card, false) |> ignore
@@ -283,11 +283,11 @@ let play_one io game =
         | _ -> assert false
     end else begin
       io.output "No action point. Skip to treasure stage";
-      skip_to_next ()
+      skip ()
     end
   in
   let play_treasure () =
-    let skip_to_next () =
+    let skip () =
       game.stat.buys <- 0;
       game.stage <- Buy
     in
@@ -297,10 +297,10 @@ let play_one io game =
     with
     | Unselectable ->
       io.output "No treasure card to play. Skip to buy stage";
-      skip_to_next ()
+      skip ()
     | Skip ->
       io.output "Skip to buy stage";
-      skip_to_next ()
+      skip ()
     | Indexes indexes ->
       let cards = play_cards indexes in
       cards
@@ -316,21 +316,21 @@ let play_one io game =
     end
   in
   let play_buy () =
-    let skip_to_next () =
+    let skip () =
       game.stat.coins <- 0;
       game.stage <- Cleanup
     in
     if game.stat.buys > 0 then begin
       match game.piles
-            |> List.map ~f:(pile_to_item [Fn.non pile_empty; (fun p -> p.sample.cost <= game.stat.coins)])
+            |> List.map ~f:([Fn.non pile_empty; (fun p -> p.sample.cost <= game.stat.coins)] |> all_preds |> pile_to_item)
             |> choose io OptionalOne "Select a pile to buy"
       with
       | Unselectable ->
         io.output "No card to buys. Skip to cleanup stage";
-        skip_to_next ()
+        skip ()
       | Skip ->
         io.output "Skip to cleanup stage";
-        skip_to_next ()
+        skip ()
       | Indexes [index] ->
         game.stat.buys <- game.stat.buys - 1;
         let card = buy_card index in
@@ -339,7 +339,7 @@ let play_one io game =
       | Indexes _ -> assert false
     end else begin
       io.output "No more buys. Skip to cleanup stage";
-      skip_to_next ()
+      skip ()
     end
   in
   let play_cleanup () =
@@ -382,7 +382,9 @@ let festival =
     if not trashed then begin
       game.trash <- self :: game.trash;
       io.output ("Trashed " ^ self.title);
-      gain_card io game (active_player game) [Fn.non pile_empty; (fun p -> p.sample.cost <= 5)];
+      [Fn.non pile_empty; (fun p -> p.sample.cost <= 5)]
+      |> all_preds
+      |> gain_card io game (active_player game);
       true
     end else false
   in { title = "Festival"; cost = 4; feature = SelfTrashAction play }
@@ -415,7 +417,9 @@ let remodel =
     in
     match trash_card () with
     | Some card ->
-      gain_card io game player [Fn.non pile_empty; (fun p -> p.sample.cost <= card.cost + 2)]
+      [Fn.non pile_empty; (fun p -> p.sample.cost <= card.cost + 2)]
+      |> all_preds
+      |> gain_card io game player
     | None -> ()
   in { title = "Remodel"; cost = 4; feature = BasicAction play }
 

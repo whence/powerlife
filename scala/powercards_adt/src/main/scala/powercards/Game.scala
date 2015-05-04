@@ -19,10 +19,53 @@ class Game(playerNames: Seq[String]) {
 
   def activePlayer = players(activePlayerIndex)
 
-  def activateNextPlayer(): Unit = {
-    activePlayerIndex += 1
-    if (activePlayerIndex >= players.size) {
-      activePlayerIndex = 0
+  def playOne(implicit io: IO): Unit = {
+    import Dialog._
+    import Stage._
+
+    def playAction(): Unit = {
+      def skip(): Unit = {
+        actions = 0
+        stage = Treasure
+      }
+      if (actions > 0) {
+        choose(io, OptionalOne, "Select an action card to play",
+          items = activePlayer.hand.map(Item.fromCard(_.feature.isAction))) match {
+          case NonSelectable =>
+            io.output("No action to play. Skip to treasure stage")
+            skip()
+          case Skip =>
+            io.output("Skip to treasure stage")
+            skip()
+          case Index(index) =>
+            actions -= 1
+            val (card, hand) = Utils.divide(activePlayer.hand, index)
+            activePlayer.hand = hand
+            activePlayer.played = activePlayer.played :+ card
+            io.output(s"Playing $card")
+            card.feature match {
+              case BasicAction(play) => play(io, this)
+              case SelfTrashAction(play) => play(io, this, card, false)
+              case BasicTreasure(_) | BasicVictory(_) => throw new MatchError()
+            }
+
+        }
+      }
+
+    }
+
+    def playTreasure(): Unit = {
+
+    }
+
+    def playBuy(): Unit = {
+
+    }
+
+    stage match {
+      case Action => playAction()
+      case Treasure => playTreasure()
+      case Buy => playBuy()
     }
   }
 }
@@ -38,7 +81,9 @@ class Player(val name: String) {
 
 class Pile(val sample: Card, initialSize: Int)
 
-class Card(val name: String, val cost: Int, val feature: CardFeature)
+class Card(val name: String, val cost: Int, val feature: CardFeature) {
+  override def toString = name
+}
 
 sealed abstract class CardFeature {
   def isAction: Boolean
@@ -50,7 +95,7 @@ case class BasicAction(play: (IO, Game) => Unit) extends CardFeature {
   val isTreasure = false
   val isVictory = false
 }
-case class SelfTrashAction(play: (IO, Game, Boolean) => Boolean) extends CardFeature {
+case class SelfTrashAction(play: (IO, Game, Card, Boolean) => Boolean) extends CardFeature {
   val isAction = true
   val isTreasure = false
   val isVictory = false
@@ -109,7 +154,13 @@ object Dialog {
   case class Index(index: Int) extends Choice
   case class Indexes(indexes: Vector[Int]) extends Choice
 
-  def choose(io: IO, requirement: Requirement, message: String, items: Vector[(String, Boolean)]): Choice = {
+  class Item(val name: String, val selectable: Boolean)
+  object Item {
+    def fromCard(pred: Card => Boolean)(card: Card): Item = new Item(card.name, pred(card))
+    def fromPile(pred: Pile => Boolean)(pile: Pile): Item = new Item(pile.sample.name, pred(pile))
+  }
+
+  def choose(io: IO, requirement: Requirement, message: String, items: Vector[Item]): Choice = {
     def selectOne(input: String): Option[Choice] = {
       val index = io.input().toInt
       items(index) match {
@@ -122,7 +173,7 @@ object Dialog {
 
     def selectMany(input: String): Option[Choice] = {
       val indexes = input.split(',').map(_.trim).withFilter(_.nonEmpty).map(_.toInt).sorted
-      val nonSelectable = indexes.map(items(_)).withFilter(!_._2).map(_._1)
+      val nonSelectable = indexes.map(items(_)).withFilter(!_.selectable).map(_.name)
       if (nonSelectable.nonEmpty) {
         io.output(s"${nonSelectable.mkString(", ")} are not selectable")
         None
@@ -148,14 +199,14 @@ object Dialog {
           io.input() match {
             case "skip" => Some(Skip)
             case "all" =>
-              val indexes = items.zipWithIndex.withFilter(_._1._2).map(_._2)
+              val indexes = items.zipWithIndex.withFilter(_._1.selectable).map(_._2)
               Some(Indexes(indexes))
             case input => selectMany(input)
           }
       }
     }
 
-    if (items.exists(_._2)) {
+    if (items.exists(_.selectable)) {
       Utils.loopTil(ask)
     } else {
       NonSelectable
@@ -186,5 +237,9 @@ object Utils {
   def loopTil[A](f: () => Option[A]): A = f() match {
     case Some(x) => x
     case None => loopTil(f)
+  }
+
+  def all[A](predicates: Seq[A => Boolean]): A => Boolean = { x =>
+    predicates.forall(_(x))
   }
 }
