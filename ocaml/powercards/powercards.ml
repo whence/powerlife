@@ -41,7 +41,7 @@ and card = {
 }
 and card_feature =
   | BasicAction of (io -> game -> unit)
-  | SelfTrashAction of (io -> game * bool -> bool)
+  | SelfTrashAction of (io -> game * card * bool -> bool)
   | BasicTreasure of int
   | BasicVictory of int
   | DynamicVictory of (player -> int)
@@ -219,8 +219,27 @@ let end_stat game =
   let max_vps = List.hd_exn stats |> snd in
   stats |> List.map ~f:(fun (name, vps) -> (name, vps, (vps = max_vps)))
 
+let card_to_item predicate card = (card.title, predicate card)
+
+let pile_to_item predicates pile =
+  let selectable = List.for_all predicates ~f:(fun p -> p pile) in
+  (pile.sample.title, selectable)
+
+let gain_card io game player predicates =
+  match game.piles
+        |> List.map ~f:(pile_to_item predicates)
+        |> choose io MandatoryOne "Select a pile to gain"
+  with
+  | Unselectable ->
+    io.output "No pile available to gain";
+  | Indexes [index] ->
+    let pile = List.nth_exn game.piles index in
+    pile.size <- pile.size - 1;
+    player.discard <- pile.sample :: player.discard;
+    "Gained " ^ pile.sample.title |> io.output;
+  | Indexes _ | Skip -> assert false
+
 let play_one io game =
-  let card_to_item predicate card = (card.title, predicate card) in
   let play_cards indexes =
     let player = active_player game in
     let (played, hand) = split_by_indexes player.hand indexes in
@@ -258,7 +277,7 @@ let play_one io game =
           "playing " ^ card.title |> io.output;
           begin match card.feature with
           | BasicAction play -> play io game
-          | SelfTrashAction play -> play io (game, false) |> ignore
+          | SelfTrashAction play -> play io (game, card, false) |> ignore
           | BasicTreasure _ | BasicVictory _ | DynamicVictory _ -> assert false
           end
         | _ -> assert false
@@ -303,7 +322,7 @@ let play_one io game =
     in
     if game.stat.buys > 0 then begin
       match game.piles
-            |> List.map ~f:(fun p -> (p.sample.title, p.size > 0 && p.sample.cost <= game.stat.coins))
+            |> List.map ~f:(pile_to_item [Fn.non pile_empty; (fun p -> p.sample.cost <= game.stat.coins)])
             |> choose io OptionalOne "Select a pile to buy"
       with
       | Unselectable ->
@@ -358,6 +377,20 @@ let garden =
     cnt / 10
   in { title ="Garden"; cost = 4; feature = DynamicVictory vps }
 
+let festival =
+  let play io (game, self, trashed) =
+    if not trashed then begin
+      game.trash <- self :: game.trash;
+      io.output ("Trashed " ^ self.title);
+      gain_card io game (active_player game) [Fn.non pile_empty; (fun p -> p.sample.cost <= 5)];
+      true
+    end else false
+  in { title = "Festival"; cost = 4; feature = SelfTrashAction play }
+
+let smithy =
+  let play _ game = draw_cards 3 (active_player game) |> ignore
+  in { title = "Smithy"; cost = 4; feature = BasicAction play }
+
 let remodel =
   let play io game =
     let player = active_player game in
@@ -380,24 +413,43 @@ let remodel =
         end
       | Skip -> assert false
     in
-    let gain_card max_cost =
-      match game.piles
-            |> List.map ~f:(fun p -> (p.sample.title, not (pile_empty p) && p.sample.cost <= max_cost))
-            |> choose io MandatoryOne "Select a pile to gain"
-      with
-      | Unselectable ->
-        io.output "No pile available to gain";
-      | Indexes [index] ->
-        let pile = List.nth_exn game.piles index in
-        pile.size <- pile.size - 1;
-        player.discard <- pile.sample :: player.discard;
-        "Gained " ^ pile.sample.title |> io.output;
-      | Indexes _ | Skip -> assert false
-    in
     match trash_card () with
-    | Some card -> gain_card (card.cost + 2)
+    | Some card ->
+      gain_card io game player [Fn.non pile_empty; (fun p -> p.sample.cost <= card.cost + 2)]
     | None -> ()
   in { title = "Remodel"; cost = 4; feature = BasicAction play }
+
+let throne_room =
+  let play io game =
+    let player = active_player game in
+    match player.hand
+          |> List.map ~f:(card_to_item is_action)
+          |> choose io MandatoryOne "Select an action card to play twice"
+    with
+    | Unselectable ->
+      io.output "No action card to play"
+    | Indexes indexes ->
+      begin match split_by_indexes player.hand indexes with
+      | ([card], hand) ->
+        player.hand <- hand;
+        player.played <- card :: player.played;
+        begin match card.feature with
+        | BasicAction play ->
+          "playing " ^ card.title ^ " first time" |> io.output;
+          play io game;
+          "playing " ^ card.title ^ " second time" |> io.output;
+          play io game
+        | SelfTrashAction play ->
+          "playing " ^ card.title ^ " first time" |> io.output;
+          let trashed = play io (game, card, false) in
+          "playing " ^ card.title ^ " second time" |> io.output;
+          play io (game, card, trashed) |> ignore
+        | BasicTreasure _ | BasicVictory _ | DynamicVictory _ -> assert false
+        end
+      | (_, _) -> assert false
+      end
+    | Skip -> assert false
+  in { title = "Throne Room"; cost = 4; feature = BasicAction play }
 
 let create_console_io () = {
   input = read_line;
@@ -419,7 +471,7 @@ let create_game names =
   let player_cnt = List.length names in
   { players = List.map names ~f:create_player;
     active_player_index = Random.int player_cnt;
-    piles = create_start_piles [remodel; garden] player_cnt;
+    piles = create_start_piles [remodel; garden; festival; smithy; throne_room] player_cnt;
     trash = [];
     stage = Action;
     stat = { actions = 1; buys = 1; coins = 0 };

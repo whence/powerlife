@@ -21,7 +21,7 @@ public class ThroneRoom extends Card implements ActionCard {
 
   @Override
   public void play(Game game) {
-    OptionalInt iAction = game.getDialog().chooseOptionalOne("Select an action card to play twice",
+    OptionalInt iAction = game.getDialog().chooseMandatoryOne("Select an action card to play twice",
         Choices.ofCards(game.getActivePlayer().getHand(), c -> c instanceof ActionCard));
     if (iAction.isPresent()) {
       Card actionCard = Cards.moveOne(game.getActivePlayer().getHand(), game.getActivePlayer().getPlayed(),
