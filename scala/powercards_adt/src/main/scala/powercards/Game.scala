@@ -7,7 +7,7 @@ object Stage extends Enumeration {
 
 class Game(playerNames: Seq[String]) {
   var players: Vector[Player] = playerNames.map(new Player(_)).toVector
-  private var activePlayerIndex = util.Random.nextInt(players.size)
+  private var activePlayerIndex = util.Random.nextInt(players.length)
   val piles: Vector[Pile] = Vector(
     new Pile(Cards.copper, 60), new Pile(Cards.estate, 12),
     new Pile(Cards.remodel, 10))
@@ -32,7 +32,7 @@ class Game(playerNames: Seq[String]) {
         choose(io, OptionalOne, "Select an action card to play",
           items = activePlayer.hand.map(Item.fromCard(_.feature.isAction))) match {
           case NonSelectable =>
-            io.output("No action to play. Skip to treasure stage")
+            io.output("No action card to play. Skip to treasure stage")
             skip()
           case Skip =>
             io.output("Skip to treasure stage")
@@ -57,15 +57,73 @@ class Game(playerNames: Seq[String]) {
     }
 
     def playTreasure(): Unit = {
-
+      def skip(): Unit = {
+        buys = 0
+        stage = Buy
+      }
+      choose(io, Unlimited, "Select treasure cards to play",
+        items = activePlayer.hand.map(Item.fromCard(_.feature.isTreasure))) match {
+        case NonSelectable =>
+          io.output("No treasure card to play. Skip to buy stage")
+          skip()
+        case Skip =>
+          io.output("Skip to buy stage")
+          skip()
+        case Indexes(indexes) =>
+          val (cards, hand) = Utils.divides(activePlayer.hand, indexes)
+          activePlayer.hand = hand
+          activePlayer.played = activePlayer.played ++ cards
+          io.output(s"Playing ${cards.mkString(", ")}")
+          for (card <- cards) {
+            card.feature match {
+              case BasicAction(_) | SelfTrashAction(_) | BasicVictory(_) | DynamicVictory(_) => assert(assertion = false)
+              case BasicTreasure(c) => coins += c
+            }
+          }
+        case Index(_) => assert(assertion = false)
+      }
     }
 
     def playBuy(): Unit = {
+      def skip(): Unit = {
+        coins = 0
+        stage = Cleanup
+      }
 
+      if (buys > 0) {
+        choose(io, OptionalOne, "Select a pile to buy",
+          items = piles.map(Item.fromPile(Fn.all(Seq({ !_.isEmpty }, { _.sample.cost <= coins }))))) match {
+          case NonSelectable =>
+            io.output("No card to buy. Skip to cleanup stage")
+            skip()
+          case Skip =>
+            io.output("Skip to cleanup stage")
+            skip()
+          case Index(index) =>
+            buys -= 1
+            val pile = piles(index)
+            val card = pile.pop()
+            activePlayer.discard = activePlayer.discard :+ card
+            coins -= card.cost
+            io.output(s"Bought $card")
+          case Indexes(_) => assert(assertion = false)
+        }
+      } else {
+        io.output("No more buys. Skip to cleanup stage")
+        skip()
+      }
     }
 
     def playCleanup(): Unit = {
-
+      activePlayer.discard = activePlayer.discard ++ activePlayer.hand ++ activePlayer.played
+      activePlayer.played = Vector.empty
+      activePlayer.hand = Vector.empty
+      activePlayer.drawCards(5)
+      activePlayerIndex = if (activePlayerIndex == players.length - 1) 0 else activePlayerIndex + 1
+      stage = Action
+      actions = 1
+      buys = 1
+      coins = 0
     }
 
     stage match {
@@ -84,9 +142,22 @@ class Player(val name: String) {
   var hand: Vector[Card] = fullInitDeck.take(5).toVector
   var played: Vector[Card] = Vector.empty
   var discard: Vector[Card] = Vector.empty
+
+  def drawCards(n: Int): Vector[Card] = {
+    ???
+  }
 }
 
-class Pile(val sample: Card, initialSize: Int)
+class Pile(val sample: Card, initialSize: Int) {
+  var size = initialSize
+
+  def isEmpty: Boolean = size == 0
+
+  def pop(): Card = {
+    size -= 1
+    sample
+  }
+}
 
 class Card(val name: String, val cost: Int, val feature: CardFeature) {
   override def toString = name
@@ -251,8 +322,9 @@ object Utils {
     case Some(x) => x
     case None => loopTil(f)
   }
+}
 
-  def all[A](predicates: Seq[A => Boolean]): A => Boolean = { x =>
-    predicates.forall(_(x))
-  }
+object Fn {
+  def all[A](predicates: Seq[A => Boolean]): A => Boolean = { x => predicates.forall(_(x)) }
+  def non[A](predicate: A => Boolean): A => Boolean = { x => !predicate(x) }
 }
