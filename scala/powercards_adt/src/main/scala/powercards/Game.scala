@@ -46,12 +46,14 @@ class Game(playerNames: Seq[String]) {
             card.feature match {
               case BasicAction(play) => play(io, this)
               case SelfTrashAction(play) => play(io, this, card, false)
-              case BasicTreasure(_) | BasicVictory(_) => throw new MatchError()
+              case BasicTreasure(_) | BasicVictory(_) | DynamicVictory(_) => assert(assertion = false)
             }
-
+          case Indexes(_) => assert(assertion = false)
         }
+      } else {
+        io.output("No action point. Skip to treasure stage")
+        skip()
       }
-
     }
 
     def playTreasure(): Unit = {
@@ -62,10 +64,15 @@ class Game(playerNames: Seq[String]) {
 
     }
 
+    def playCleanup(): Unit = {
+
+    }
+
     stage match {
       case Action => playAction()
       case Treasure => playTreasure()
       case Buy => playBuy()
+      case Cleanup => playCleanup()
     }
   }
 }
@@ -106,6 +113,11 @@ case class BasicTreasure(coins: Int) extends CardFeature {
   val isVictory = false
 }
 case class BasicVictory(vps: Int) extends CardFeature {
+  val isAction = false
+  val isTreasure = false
+  val isVictory = true
+}
+case class DynamicVictory(vps: Player => Int) extends CardFeature {
   val isAction = false
   val isTreasure = false
   val isVictory = true
@@ -163,11 +175,12 @@ object Dialog {
   def choose(io: IO, requirement: Requirement, message: String, items: Vector[Item]): Choice = {
     def selectOne(input: String): Option[Choice] = {
       val index = io.input().toInt
-      items(index) match {
-        case (_, true) => Some(Index(index))
-        case (name, false) =>
-          io.output(s"$name is not selectable")
-          None
+      val item = items(index)
+      if (item.selectable) {
+        Some(Index(index))
+      } else {
+        io.output(s"${item.name} is not selectable")
+        None
       }
     }
 
@@ -182,8 +195,8 @@ object Dialog {
 
     def ask(): Option[Choice] = {
       io.output(message)
-      for (((name, selectable), i) <- items.zipWithIndex) {
-        io.output(s"[$i] $name ${if (selectable) "(select)" else ""}")
+      for ((item, i) <- items.zipWithIndex) {
+        io.output(s"[$i] ${item.name} ${if (item.selectable) "(select)" else ""}")
       }
       requirement match {
         case MandatoryOne =>
