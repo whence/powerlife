@@ -8,9 +8,24 @@ object Stage extends Enumeration {
 class Game(playerNames: Seq[String]) {
   var players: Vector[Player] = playerNames.map(new Player(_)).toVector
   private var activePlayerIndex = util.Random.nextInt(players.length)
-  val piles: Vector[Pile] = Vector(
-    new Pile(Cards.copper, 60), new Pile(Cards.estate, 12),
-    new Pile(Cards.remodel, 10))
+
+  val piles: Vector[Pile] = {
+    import Cards._
+    val treasures = Seq(
+      new Pile(copper, 60 - players.length * 7),
+      new Pile(silver, 40),
+      new Pile(gold, 30))
+    val victories = {
+      val n = players.length match {
+        case 2 => 8
+        case 3 | 4 => 12
+      }
+      Seq(estate, duchy, province).map(new Pile(_, n))
+    }
+    val kingdoms = Seq(remodel, garden, festival, smithy, throneRoom).map(new Pile(_, 10))
+    (treasures ++ victories ++ kingdoms).toVector
+  }
+
   var trash: Vector[Card] = Vector.empty
   var stage: Stage.Stage = Stage.Action
   var actions: Int = 1
@@ -41,7 +56,7 @@ class Game(playerNames: Seq[String]) {
             actions -= 1
             val (card, hand) = Utils.divide(activePlayer.hand, index)
             activePlayer.hand = hand
-            activePlayer.played = activePlayer.played :+ card
+            activePlayer.played :+= card
             io.output(s"Playing $card")
             card.feature match {
               case BasicAction(play) => play(io, this)
@@ -72,7 +87,7 @@ class Game(playerNames: Seq[String]) {
         case Indexes(indexes) =>
           val (cards, hand) = Utils.divides(activePlayer.hand, indexes)
           activePlayer.hand = hand
-          activePlayer.played = activePlayer.played ++ cards
+          activePlayer.played ++= cards
           io.output(s"Playing ${cards.mkString(", ")}")
           for (card <- cards) {
             card.feature match {
@@ -103,7 +118,7 @@ class Game(playerNames: Seq[String]) {
             buys -= 1
             val pile = piles(index)
             val card = pile.pop()
-            activePlayer.discard = activePlayer.discard :+ card
+            activePlayer.discard :+= card
             coins -= card.cost
             io.output(s"Bought $card")
           case Indexes(_) => assert(assertion = false)
@@ -115,7 +130,7 @@ class Game(playerNames: Seq[String]) {
     }
 
     def playCleanup(): Unit = {
-      activePlayer.discard = activePlayer.discard ++ activePlayer.hand ++ activePlayer.played
+      activePlayer.discard ++= activePlayer.hand ++ activePlayer.played
       activePlayer.played = Vector.empty
       activePlayer.hand = Vector.empty
       activePlayer.drawCards(5)
@@ -133,7 +148,35 @@ class Game(playerNames: Seq[String]) {
       case Cleanup => playCleanup()
     }
   }
+
+  def isEnded: Boolean = piles.find(_.sample == Cards.province).get.isEmpty || piles.count(_.isEmpty) >= 3
+
+  def playTilEnd(implicit io: IO): Unit = {
+    def play(): Option[Seq[EndStat]] = {
+      playOne(io)
+      if (isEnded) Some(endStats) else None
+    }
+    for (stat <- Utils.loopTil(play)) {
+      io.output(s"${stat.player.name}: ${stat.vps} ${if (stat.won) "(won)" else ""}")
+    }
+  }
+
+  def endStats: Seq[EndStat] = {
+    def playerToVps(player: Player): Int = {
+      def cardToVps(card: Card): Int = card.feature match {
+        case BasicAction(_) | SelfTrashAction(_) | BasicTreasure(_) => 0
+        case BasicVictory(vps) => vps
+        case DynamicVictory(f) => f(player)
+      }
+      Seq(player.deck, player.hand, player.played, player.discard).flatten.map(cardToVps).sum
+    }
+    val playerVps = players.map(p => (p, playerToVps(p)))
+    val maxVps = playerVps.map(_._2).max
+    playerVps.map { case (player, vps) => new EndStat(player, vps, vps == maxVps) }.sortBy(_.vps)(Ordering[Int].reverse)
+  }
 }
+
+class EndStat(val player: Player, val vps: Int, val won: Boolean)
 
 class Player(val name: String) {
   private val fullInitDeck = util.Random.shuffle(
@@ -144,7 +187,30 @@ class Player(val name: String) {
   var discard: Vector[Card] = Vector.empty
 
   def drawCards(n: Int): Vector[Card] = {
-    ???
+    def draw(n: Int): Vector[Card] = {
+      val (newDeck, drawn) = deck.splitAt(deck.length - n)
+      deck = newDeck
+      val cards = drawn.reverse
+      hand ++= cards
+      cards
+    }
+
+    @annotation.tailrec
+    def loop(acc: Vector[Card]): Vector[Card] = {
+      if (deck.length >= n - acc.length) {
+        acc ++ draw(n - acc.length)
+      } else if (deck.nonEmpty) {
+        loop(acc ++ draw(deck.length))
+      } else if (discard.nonEmpty) {
+        deck = util.Random.shuffle(discard)
+        discard = Vector.empty
+        loop(acc)
+      } else {
+        acc
+      }
+    }
+
+    loop(Vector.empty)
   }
 }
 
@@ -221,7 +287,92 @@ object Cards {
   val duchy = new Card("Duchy", cost = 5, feature = BasicVictory(vps = 3))
   val province = new Card("Province", cost = 8, feature = BasicVictory(vps = 6))
 
+  private def gainCard(io: IO, game: Game, player: Player, predicate: Pile => Boolean): Option[Card] = {
+    import Dialog._
+    choose(io, MandatoryOne, "Select a pile to gain",
+      items = game.piles.map(Item.fromPile(predicate))) match {
+      case NonSelectable =>
+        io.output("No pile available to gain")
+        None
+      case Index(index) =>
+        val pile = game.piles(index)
+        val card = pile.pop()
+        player.discard :+= card
+        io.output(s"Gained $card")
+        Some(card)
+      case Indexes(_) | Skip =>
+        assert(assertion = false)
+        None
+    }
+  }
+
+  private def trashCard(io: IO, game: Game, player: Player): Option[Card] = {
+    import Dialog._
+    choose(io, MandatoryOne, "Select a card to trash",
+      items = player.hand.map(Item.fromCard(Fn.const(true)))) match {
+      case NonSelectable =>
+        io.output("No card to trash")
+        None
+      case Index(index) =>
+        val (card, hand) = Utils.divide(player.hand, index)
+        player.hand = hand
+        game.trash :+= card
+        io.output(s"Trashed $card")
+        Some(card)
+      case Indexes(_) | Skip =>
+        assert(assertion = false)
+        None
+    }
+  }
+
+  val garden = new Card("Garden", cost = 4, feature = DynamicVictory { player =>
+    Seq(player.deck, player.hand, player.played, player.discard).map(_.length).sum / 10
+  })
+
+  val festival = new Card("Festival", cost = 4, feature = SelfTrashAction { (io, game, card, trashed) =>
+    if (!trashed) {
+      game.trash :+= card
+      io.output(s"Trashed $card")
+      gainCard(io, game, game.activePlayer, Fn.all(Seq({ !_.isEmpty }, { _.sample.cost <= 5 })))
+      true
+    } else false
+  })
+
+  val smithy = new Card("Smithy", cost = 4, feature = BasicAction { (io, game) =>
+    game.activePlayer.drawCards(3)
+  })
+
   val remodel = new Card("Remodel", cost = 4, feature = BasicAction { (io, game) =>
+    for (trashedCard <- trashCard(io, game, game.activePlayer)) {
+      gainCard(io, game, game.activePlayer, Fn.all(Seq({ !_.isEmpty }, { _.sample.cost <= trashedCard.cost + 2 })))
+    }
+  })
+
+  val throneRoom = new Card("Throne Room", cost = 4, feature = BasicAction { (io, game) =>
+    import Dialog._
+    choose(io, MandatoryOne, "Select an action card to play twice",
+      items = game.activePlayer.hand.map(Item.fromCard(_.feature.isAction))) match {
+      case NonSelectable =>
+        io.output("No action card to play")
+      case Index(index) =>
+        val (card, hand) = Utils.divide(game.activePlayer.hand, index)
+        game.activePlayer.hand = hand
+        game.activePlayer.played :+= card
+        card.feature match {
+          case BasicAction(play) =>
+            io.output(s"Playing $card first time")
+            play(io, game)
+            io.output(s"Playing $card second time")
+            play(io, game)
+          case SelfTrashAction(play) =>
+            io.output(s"Playing $card first time")
+            val trashed = play(io, game, card, false)
+            io.output(s"Playing $card second time")
+            play(io, game, card, trashed)
+          case BasicTreasure(_) | BasicVictory(_) | DynamicVictory(_) => assert(assertion = false)
+        }
+      case Indexes(_) | Skip => assert(assertion = false)
+    }
   })
 }
 
@@ -327,4 +478,5 @@ object Utils {
 object Fn {
   def all[A](predicates: Seq[A => Boolean]): A => Boolean = { x => predicates.forall(_(x)) }
   def non[A](predicate: A => Boolean): A => Boolean = { x => !predicate(x) }
+  def const[A, B](x: B): A => B = { _ => x }
 }
