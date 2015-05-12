@@ -22,7 +22,7 @@ class Game(playerNames: Seq[String]) {
       }
       Seq(estate, duchy, province).map(new Pile(_, n))
     }
-    val kingdoms = Seq(remodel, garden, festival, smithy, throneRoom).map(new Pile(_, 10))
+    val kingdoms = Seq(remodel, garden, feast, smithy, throneRoom).map(new Pile(_, 10))
     (treasures ++ victories ++ kingdoms).toVector
   }
 
@@ -329,7 +329,7 @@ object Cards {
     Seq(player.deck, player.hand, player.played, player.discard).map(_.length).sum / 10
   })
 
-  val festival = new Card("Festival", cost = 4, feature = SelfTrashAction { (io, game, card, trashed) =>
+  val feast = new Card("Feast", cost = 4, feature = SelfTrashAction { (io, game, card, trashed) =>
     if (!trashed) {
       game.trash :+= card
       io.output(s"Trashed $card")

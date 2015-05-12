@@ -377,7 +377,7 @@ let garden =
     cnt / 10
   in { title ="Garden"; cost = 4; feature = DynamicVictory vps }
 
-let festival =
+let feast =
   let play io (game, self, trashed) =
     if not trashed then begin
       game.trash <- self :: game.trash;
@@ -387,7 +387,7 @@ let festival =
       |> gain_card io game (active_player game);
       true
     end else false
-  in { title = "Festival"; cost = 4; feature = SelfTrashAction play }
+  in { title = "Feast"; cost = 4; feature = SelfTrashAction play }
 
 let smithy =
   let play _ game = draw_cards 3 (active_player game) |> ignore
@@ -475,7 +475,7 @@ let create_game names =
   let player_cnt = List.length names in
   { players = List.map names ~f:create_player;
     active_player_index = Random.int player_cnt;
-    piles = create_start_piles [remodel; garden; festival; smithy; throne_room] player_cnt;
+    piles = create_start_piles [remodel; garden; feast; smithy; throne_room] player_cnt;
     trash = [];
     stage = Action;
     stat = { actions = 1; buys = 1; coins = 0 };
