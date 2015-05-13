@@ -181,21 +181,27 @@ let split_by_indexes xs indexes =
   let (yes, no, _) = List.foldi xs ~f:aux ~init:([], [], indexes) in
   (List.rev yes, List.rev no)
 
-let rec draw_cards_loop n_remain acc =
-  if n_remain = 0 then acc
-  else match acc with
-    | ([], _, [], _) -> acc
-    | ([], hand, discard, drawed) ->
-      draw_cards_loop n_remain (List.permute discard, hand, [], drawed)
-    | (hd :: tl, hand, discard, drawed) ->
-      draw_cards_loop (n_remain - 1) (tl, hd :: hand, discard, hd :: drawed)
+let rec draw_card player = match (player.deck, player.discard) with
+  | ([], []) -> None
+  | ([], discard) ->
+    player.deck <- List.permute discard;
+    player.discard <- [];
+    draw_card player
+  | (hd :: tl, _) ->
+    player.deck <- tl;
+    player.hand <- hd :: player.hand;
+    Some hd
 
-let draw_cards n player =
-  let (deck, hand, discard, drawed) = draw_cards_loop n (player.deck, player.hand, player.discard, []) in
-  player.deck <- deck;
-  player.hand <- hand;
-  player.discard <- discard;
-  drawed
+let draw_cards_until player predicate =
+  let rec loop acc =
+    if predicate acc then List.rev acc
+    else match draw_card player with
+      | None -> List.rev acc
+      | Some card -> loop (card :: acc)
+  in
+  loop []
+
+let draw_cards player n = draw_cards_until player (fun cards -> List.length cards >= n)
 
 let is_ended game =
   let cond1 () = find_pile game province |> pile_empty in
@@ -347,7 +353,7 @@ let play_one io game =
     player.discard <- player.played @ player.hand @ player.discard;
     player.played <- [];
     player.hand <- [];
-    draw_cards 5 player |> ignore;
+    draw_cards player 5 |> ignore;
     game.active_player_index <- (if game.active_player_index = (List.length game.players) - 1
                                  then 0 else game.active_player_index + 1);
     game.stage <- Action;
@@ -390,7 +396,7 @@ let feast =
   in { title = "Feast"; cost = 4; feature = SelfTrashAction play }
 
 let smithy =
-  let play _ game = draw_cards 3 (active_player game) |> ignore
+  let play _ game = draw_cards (active_player game) 3 |> ignore
   in { title = "Smithy"; cost = 4; feature = BasicAction play }
 
 let remodel =
