@@ -189,19 +189,20 @@ let rec draw_card player = match (player.deck, player.discard) with
     draw_card player
   | (hd :: tl, _) ->
     player.deck <- tl;
-    player.hand <- hd :: player.hand;
     Some hd
 
 let draw_cards_until player predicate =
   let rec loop acc =
-    if predicate acc then List.rev acc
+    if predicate acc then acc
     else match draw_card player with
-      | None -> List.rev acc
+      | None -> acc
       | Some card -> loop (card :: acc)
   in
   loop []
 
-let draw_cards player n = draw_cards_until player (fun cards -> List.length cards >= n)
+let draw_cards_to_hand player n =
+  let cards = draw_cards_until player (fun cards -> List.length cards >= n) in
+  player.hand <- cards @ player.hand
 
 let is_ended game =
   let cond1 () = find_pile game province |> pile_empty in
@@ -353,7 +354,7 @@ let play_one io game =
     player.discard <- player.played @ player.hand @ player.discard;
     player.played <- [];
     player.hand <- [];
-    draw_cards player 5 |> ignore;
+    draw_cards_to_hand player 5;
     game.active_player_index <- (if game.active_player_index = (List.length game.players) - 1
                                  then 0 else game.active_player_index + 1);
     game.stage <- Action;
@@ -396,7 +397,7 @@ let feast =
   in { title = "Feast"; cost = 4; feature = SelfTrashAction play }
 
 let smithy =
-  let play _ game = draw_cards (active_player game) 3 |> ignore
+  let play _ game = draw_cards_to_hand (active_player game) 3
   in { title = "Smithy"; cost = 4; feature = BasicAction play }
 
 let remodel =
