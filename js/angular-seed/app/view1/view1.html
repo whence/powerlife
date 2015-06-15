@@ -1,0 +1,25 @@
+<div ng-show="superApraFunds.length === 0 || electronicServiceAddresses.length === 0">Sorry, API is down.</div>
+
+<form name="fundForm" class="form-inline" novalidate>
+  <fieldset ng-disabled="superApraFunds.length === 0 || electronicServiceAddresses.length === 0">
+    <select ng-options="type for type in ['APRA', 'SMSF']" ng-model="fund.fundType" class="form-control" required></select>
+
+    <br>
+
+    <!--<select ng-options="fund.name for fund in superApraFunds" ng-model="fund.apra" ng-show="fund.fundType === 'APRA'" ng-required="fund.fundType === 'APRA'" class="form-control"></select>-->
+    <input type="text" typeahead="fund as fund.name for fund in superApraFunds | filter:$viewValue | limitTo:8" ng-model="fund.apra" ng-show="fund.fundType === 'APRA'" ng-required="fund.fundType === 'APRA'" class="form-control">
+    <label ng-show="fund.fundType === 'APRA'">APRA USI: <input type="text" ng-model="fund.apra.usi" ng-disabled="true" ng-required="fund.fundType === 'APRA'" class="form-control"></label>
+    <label ng-show="fund.fundType === 'APRA'">APRA ABN: <input type="text" ng-model="fund.apra.abn" ng-disabled="true" ng-required="fund.fundType === 'APRA'" class="form-control"></label>
+
+    <input type="text" typeahead="esa.alias for esa in electronicServiceAddresses | filter:$viewValue | limitTo:8" ng-model="fund.smsf.esa" ng-show="fund.fundType === 'SMSF'" ng-required="fund.fundType === 'SMSF'" class="form-control">
+    <label ng-show="fund.fundType === 'SMSF'">SMSF name: <input type="text" ng-model="fund.smsf.name" ng-required="fund.fundType === 'SMSF'" class="form-control"></label>
+    <label ng-show="fund.fundType === 'SMSF'">SMSF ABN: <input type="text" ng-model="fund.smsf.abn" ng-required="fund.fundType === 'SMSF'" class="form-control"></label>
+
+    <br>
+
+    <button ng-disabled="fundForm.$invalid" class="btn btn-primary">Submit</button>
+  </fieldset>
+</form>
+
+<pre>{{fund | json}}</pre>
+<pre>{{fundForm.$valid}}</pre>
