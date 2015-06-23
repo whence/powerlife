@@ -1,0 +1,4 @@
+rootProject.name = 'Jcala'
+include 'Dravadle'
+include 'Xcaladle'
+

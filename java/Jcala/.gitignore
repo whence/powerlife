@@ -1,0 +1,43 @@
+# Temp dirs
+.tmp
+.tmp_*
+classes
+
+# Temp files
+target/
+*.log
+*.stackdump
+
+# Gradle and build ignores
+gradle-app.setting
+.gradle/
+build/
+
+# Eclipse
+.metadata
+.project
+.settings
+
+# IDEA artifacts and output dirs
+*.iml
+*.ipr
+*.iws
+.idea
+out
+
+# VIM
+.agignore
+
+# EMACS
+.projectile
+.emacs-project
+
+# Misc
+.rvmrc
+.DS_Store
+/classes
+**/support/attack-script/*txt
+# GTAGS
+GPATH
+GRTAGS
+GTAGS
