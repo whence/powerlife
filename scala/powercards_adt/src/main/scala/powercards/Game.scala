@@ -458,7 +458,7 @@ object Utils {
       (Vector(x), y)
     case _ =>
       val selected = indexes.map(items(_))
-      val unselected = Range(0, items.length).diff(indexes).map(items(_)).toVector
+      val unselected = items.indices.diff(indexes).map(items(_)).toVector
       (selected, unselected)
   }
 
