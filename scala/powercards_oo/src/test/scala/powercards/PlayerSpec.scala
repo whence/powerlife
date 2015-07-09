@@ -9,14 +9,7 @@ class PlayerSpec extends FlatSpec with Matchers {
     player.played shouldBe empty
     player.discard shouldBe empty
     val fullDeck = player.deck ++ player.hand
-    fullDeck.count {
-      case x: Copper => true
-      case _ => false
-    } shouldBe 7
-
-    fullDeck.count {
-      case x: Estate => true
-      case _ => false
-    } shouldBe 3
+    fullDeck.count(_.isInstanceOf[Copper]) shouldBe 7
+    fullDeck.count(_.isInstanceOf[Estate]) shouldBe 3
   }
 }
