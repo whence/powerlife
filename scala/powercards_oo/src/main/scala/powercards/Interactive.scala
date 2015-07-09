@@ -1,6 +1,7 @@
 package powercards
 
 trait Interactive {
+  def io: IO
   def chooseOne(message: String, items: IndexedSeq[Item]): ChoiceOne = ???
   def chooseOptionalOne(message: String, items: IndexedSeq[Item]): ChoiceOptionalOne = ???
 }

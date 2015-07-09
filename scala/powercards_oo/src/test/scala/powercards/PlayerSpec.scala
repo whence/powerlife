@@ -5,7 +5,7 @@ import powercards.cards.{Estate, Copper}
 
 class PlayerSpec extends FlatSpec with Matchers {
   "Player" should "initialise cards" in {
-    val player = new Player("P1")
+    val player = new Player("P1", new RecordedIO(Seq.empty))
     player.played shouldBe empty
     player.discard shouldBe empty
     val fullDeck = player.deck ++ player.hand
