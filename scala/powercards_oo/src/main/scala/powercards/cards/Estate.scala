@@ -1,8 +1,8 @@
 package powercards.cards
 
-import powercards.VictoryCard
+import powercards.BasicVictoryCard
 
-class Estate extends VictoryCard {
+class Estate extends BasicVictoryCard {
   val cost = 2
   val vps = 1
 }
