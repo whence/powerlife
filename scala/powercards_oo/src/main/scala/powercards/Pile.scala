@@ -10,13 +10,15 @@ class Pile(cardFactory: () => Card, initialSize: Int) {
   def isEmpty: Boolean = size <= 0
 
   def push(card: Card): Unit = {
+    import Functions._
     require(card.getClass.isAssignableFrom(sample.getClass))
     buffer.push(card)
     size += 1
   }
 
   def pop(): Card = {
-    require(!isEmpty)
+    import Functions._
+    requireState(!isEmpty)
     val card = if (buffer.isEmpty) cardFactory() else buffer.pop()
     size -= 1
     card

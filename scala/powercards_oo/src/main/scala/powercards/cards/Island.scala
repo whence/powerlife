@@ -6,7 +6,5 @@ class Island extends ActionCard with BasicVictoryCard {
   val cost = 4
   val vps = 2
 
-  def play(game: Game): Unit = {
-    print("playing island")
-  }
+  def play(game: Game): Unit = ???
 }

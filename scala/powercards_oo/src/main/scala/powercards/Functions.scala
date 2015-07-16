@@ -1,6 +1,8 @@
 package powercards
 
-object Functions {
+import org.scalactic.Requirements
+
+object Functions extends Requirements {
   def divides[A](items: Vector[A], indexes: Vector[Int]): (Vector[A], Vector[A]) = indexes match {
     case Seq() =>
       (Vector.empty, items)

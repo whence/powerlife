@@ -7,7 +7,7 @@ object ActionStage extends Stage {
   def play(game: Game): Stage = {
     if (game.active.actions > 0) {
       game.active.chooseOptionalOne(message = "Select an action card to play",
-        items = game.active.hand.map(Item.fromCard(_.isInstanceOf[ActionCard]))) match {
+        items = game.active.hand.map(c => new Item(c.name, c.isInstanceOf[ActionCard]))) match {
         case choices.optional_one.NonSelectable =>
           game.active.io.output("No action card to play. Skip to treasure stage")
           skip(game)

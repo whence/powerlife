@@ -12,7 +12,7 @@ class PileSpec extends FlatSpec with Matchers {
 
   "Pile" should "not accept card of the other type" in {
     val pile = new Pile(() => new Copper, 10)
-    a [IllegalArgumentException] should be thrownBy {
+    a [IllegalArgumentException] shouldBe thrownBy {
       pile.push(new Silver)
     }
   }
@@ -29,7 +29,7 @@ class PileSpec extends FlatSpec with Matchers {
   "Pile" should "not be able to pop if empty" in {
     val pile = new Pile(() => new Estate, 0)
     pile shouldBe empty
-    a [IllegalArgumentException] should be thrownBy {
+    a [IllegalStateException] shouldBe thrownBy {
       pile.pop()
     }
   }

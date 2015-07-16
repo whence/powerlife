@@ -18,7 +18,9 @@ trait VictoryCard extends Card {
   def calculateVps(allCards: Vector[Card]): Int
 }
 
-trait BasicTreasureCard extends TreasureCard {
+trait Bulkable
+
+trait BasicTreasureCard extends TreasureCard with Bulkable {
   def coins: Int
   def play(game: Game): Unit = {
     game.active.coins += coins
