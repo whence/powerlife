@@ -9,22 +9,22 @@ object ActionStage extends Stage {
       game.active.chooseOptionalOne(message = "Select an action card to play",
         items = game.active.hand.map(c => new Item(c.name, c.isInstanceOf[ActionCard]))) match {
         case choices.optional_one.NonSelectable =>
-          game.active.io.output("No action card to play. Skip to treasure stage")
+          game.log("No action card to play. Skip to treasure stage")
           skip(game)
         case choices.optional_one.Skip =>
-          game.active.io.output("Skip to treasure stage")
+          game.log("Skip to treasure stage")
           skip(game)
         case choices.optional_one.One(index) =>
           game.active.actions -= 1
           val (card, hand) = divide(game.active.hand, index)
           game.active.hand = hand
           game.active.played :+= card
-          game.active.io.output(s"Playing $card")
+          game.log(s"Playing $card")
           card.asInstanceOf[ActionCard].play(game)
           this
       }
     } else {
-      game.active.io.output("No action point. Skip to treasure stage")
+      game.log("No action point. Skip to treasure stage")
       skip(game)
     }
   }

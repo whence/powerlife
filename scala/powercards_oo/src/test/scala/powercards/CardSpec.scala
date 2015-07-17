@@ -3,8 +3,23 @@ package powercards
 import org.scalatest._
 import powercards.cards.{Island, Estate, Silver}
 
+import scala.collection.mutable
+
 class CardSpec extends FlatSpec with Matchers {
-  val game = new Game(Vector("P1", "P2").map(new Player(_, new RecordedIO(Seq.empty))))
+  val player1 = new Player with ConsoleInteractive with ReplayableInteractive {
+    val name = "P1"
+    val inputQueue = mutable.Queue.empty[String]
+    val throwOnEmptyQueue = true
+  }
+
+  val player2 = new Player with ConsoleInteractive with ReplayableInteractive {
+    val name = "P2"
+    val inputQueue = mutable.Queue.empty[String]
+    val throwOnEmptyQueue = true
+  }
+
+  val players = Vector(player1, player2)
+  val game = new Game(players, new SinkLogger)
 
   "Silver" should "have a real cost of 3" in {
     new Silver().calculateCost(game) shouldBe 3

@@ -3,7 +3,10 @@ package powercards
 import powercards.cards.{Copper, Estate}
 import util.Random.shuffle
 
-class Player(val name: String, val io: IO) extends Interactive {
+trait Player extends Interactive {
+
+  def name: String
+
   private val initDeck = shuffle(Seq.fill(3)(new Estate) ++ Seq.fill(7)(new Copper))
   var deck: Vector[Card] = initDeck.drop(5).toVector
   var hand: Vector[Card] = initDeck.take(5).toVector
