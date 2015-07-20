@@ -19,7 +19,7 @@ trait Interactive {
   def choose(title: String, items: Vector[String]): String
 }
 
-trait ConsoleInteractive extends Interactive {
+trait LocalInteractive extends Interactive {
   def choose(message: String, items: Vector[String]): String = {
     println(message)
     items.foreach(println)
@@ -44,9 +44,9 @@ trait AIInteractive extends Interactive {
 
   def choose(message: String, items: Vector[String]): String = {
     magic(allLogs, hand)
-  }
 
-  private def magic(logs: Seq[String], hand: Vector[Card]): String = ???
+    def magic(logs: Seq[String], hand: Vector[Card]): String = ???
+  }
 }
 
 trait AuditingInteractive extends Interactive {
@@ -67,9 +67,9 @@ trait GlobalLogging {
 }
 
 object SampleApp {
-  val gameLog = new ArrayBuffer
+  val gameLog = new ArrayBuffer[String]
 
-  val localPlayer = new Player with ConsoleInteractive with AuditingInteractive with GlobalLogging {
+  val localPlayer = new Player with LocalInteractive with AuditingInteractive with GlobalLogging {
     val name = "local"
     val logStore = gameLog
   }
