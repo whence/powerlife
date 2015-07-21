@@ -6,22 +6,21 @@ import scala.collection.mutable.ArrayBuffer
 trait Card
 
 trait Connection {
-  def send(content: String) = ???
-  def receive(): String = ???
+  def send(content: String)
+  def receive(): String
 }
 
-trait Player extends Interactive {
-  def name: String
+class Player(val name: String) {
   def hand: Vector[Card] = Vector.empty
 }
 
 trait Interactive {
-  def choose(title: String, items: Vector[String]): String
+  def ask(question: String, items: Vector[String]): String
 }
 
 trait LocalInteractive extends Interactive {
-  def choose(message: String, items: Vector[String]): String = {
-    println(message)
+  def ask(question: String, items: Vector[String]): String = {
+    println(question)
     items.foreach(println)
     val result = io.StdIn.readLine()
     items.find(_ == result).get
@@ -31,8 +30,8 @@ trait LocalInteractive extends Interactive {
 trait NetworkInteractive extends Interactive {
   def connection: Connection
 
-  def choose(message: String, items: Vector[String]): String = {
-    connection.send(s"$message\n${items.mkString("\n")}")
+  def ask(question: String, items: Vector[String]): String = {
+    connection.send(s"$question\n${items.mkString("\n")}")
     val result = connection.receive()
     items.find(_ == result).get
   }
@@ -42,18 +41,18 @@ trait AIInteractive extends Interactive {
   def hand: Vector[Card]
   def allLogs: Seq[String]
 
-  def choose(message: String, items: Vector[String]): String = {
+  def ask(question: String, items: Vector[String]): String = {
     magic(allLogs, hand)
-
-    def magic(logs: Seq[String], hand: Vector[Card]): String = ???
   }
+
+  def magic(logs: Seq[String], hand: Vector[Card]): String
 }
 
 trait AuditingInteractive extends Interactive {
   def log(thing: String)
 
-  def choose(message: String, items: Vector[String]): String = {
-    val result = super.choose(message, items)
+  abstract override def ask(question: String, items: Vector[String]): String = {
+    val result = super.ask(question, items)
     log(result)
     result
   }
@@ -68,23 +67,24 @@ trait GlobalLogging {
 
 object SampleApp {
   val gameLog = new ArrayBuffer[String]
+  val dummyConnection = new Connection {
+    def send(content: String) = ???
+    def receive(): String = ???
+  }
 
-  val localPlayer = new Player with LocalInteractive with AuditingInteractive with GlobalLogging {
-    val name = "local"
+  val localPlayer = new Player("local") with LocalInteractive with AuditingInteractive with GlobalLogging {
     val logStore = gameLog
   }
 
-  val networkPlayer = new Player with NetworkInteractive with AuditingInteractive with GlobalLogging {
-    val name = "network"
-    val connection = new Connection {}
+  val networkPlayer = new Player("network") with NetworkInteractive with AuditingInteractive with GlobalLogging {
+    val connection = dummyConnection
     val logStore = gameLog
   }
 
-  val aiPlayer = new Player with AIInteractive with AuditingInteractive with GlobalLogging {
-    val name = "ai"
+  val aiPlayer = new Player("ai") with AIInteractive with AuditingInteractive with GlobalLogging {
     val logStore = gameLog
+    def magic(logs: Seq[String], hand: Vector[Card]): String = ???
   }
 
   val players = Vector(localPlayer, networkPlayer, aiPlayer)
-
 }

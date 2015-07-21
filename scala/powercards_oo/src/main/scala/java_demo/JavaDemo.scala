@@ -15,12 +15,12 @@ class Player(val name: String, val interactive: Interactive) {
 }
 
 trait Interactive {
-  def choose(title: String, items: Vector[String]): String
+  def ask(question: String, items: Vector[String]): String
 }
 
 class LocalInteractive extends Interactive {
-  def choose(message: String, items: Vector[String]): String = {
-    println(message)
+  def ask(question: String, items: Vector[String]): String = {
+    println(question)
     items.foreach(println)
     val result = io.StdIn.readLine()
     items.find(_ == result).get
@@ -28,8 +28,8 @@ class LocalInteractive extends Interactive {
 }
 
 class NetworkInteractive(connection: Connection) extends Interactive {
-  def choose(message: String, items: Vector[String]): String = {
-    connection.send(s"$message\n${items.mkString("\n")}")
+  def ask(question: String, items: Vector[String]): String = {
+    connection.send(s"$question\n${items.mkString("\n")}")
     val result = connection.receive()
     items.find(_ == result).get
   }
@@ -38,16 +38,16 @@ class NetworkInteractive(connection: Connection) extends Interactive {
 class AIInteractive(logRetriever: LogRetriever) extends Interactive {
   val hand: Vector[Card] = ??? // How to get my cards???
 
-  def choose(message: String, items: Vector[String]): String = {
+  def ask(question: String, items: Vector[String]): String = {
     magic(logRetriever.allLogs, hand)
-
-    def magic(logs: Seq[String], hand: Vector[Card]): String = ???
   }
+
+  private def magic(logs: Seq[String], hand: Vector[Card]): String = ???
 }
 
 class AuditingInteractive(logger: Logger, interactive: Interactive) extends Interactive {
-  def choose(message: String, items: Vector[String]): String = {
-    val result = interactive.choose(message, items)
+  def ask(question: String, items: Vector[String]): String = {
+    val result = interactive.ask(question, items)
     logger.log(result)
     result
   }
