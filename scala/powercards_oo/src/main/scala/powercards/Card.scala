@@ -29,6 +29,6 @@ trait BasicTreasureCard extends TreasureCard with Bulkable {
 
 trait BasicVictoryCard extends VictoryCard {
   def vps: Int
-  def calculateVps(allCards: Vector[Card]) = vps
+  def calculateVps(allCards: Vector[Card]): Int = vps
 }
 

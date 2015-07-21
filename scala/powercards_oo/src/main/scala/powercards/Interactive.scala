@@ -32,11 +32,13 @@ trait ReplayableInteractive extends Interactive {
     }
     if (inputQueue.isEmpty) {
       super.chooseOne(message, items)
-    } else inputQueue.dequeue() match {
-      case "NonSelectable" =>
-        choices.one.NonSelectable
-      case onePatten(index) =>
-        choices.one.One(index.toInt)
+    } else {
+      inputQueue.dequeue() match {
+        case "NonSelectable" =>
+          choices.one.NonSelectable
+        case onePatten(index) =>
+          choices.one.One(index.toInt)
+      }
     }
   }
 

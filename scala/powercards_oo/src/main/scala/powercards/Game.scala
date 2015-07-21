@@ -6,7 +6,7 @@ import util.Random.nextInt
 
 class Game(val players: Vector[Player], logger: Logger) {
   private var activePlayerIndex = nextInt(players.length)
-  def active = players(activePlayerIndex)
+  def active: Player = players(activePlayerIndex)
   private var stage: Stage = ActionStage
 
   def playOne(): Unit = {
