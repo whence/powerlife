@@ -3,9 +3,7 @@ import powerlife.powercards.cards {
     Estate
 }
 
-shared class Player(shared String name, io) satisfies Interactive {
-    shared actual IO io;
-    
+shared class Player(shared String name) {
     value initialDeck = shuffleSeq(expand {
             { for (i in 1..7) Copper() },
             { for (i in 1..3) Estate() }
@@ -19,4 +17,11 @@ shared class Player(shared String name, io) satisfies Interactive {
     shared variable Integer actions = 0;
     shared variable Integer buys = 0;
     shared variable Integer coins = 0;
+}
+
+shared class ConsolePlayer(String name) extends Player(name) satisfies ConsoleInteractive {
+}
+
+shared class NetworkPlayer(String name, connection) extends Player(name) satisfies NetworkInteractive {
+	shared actual Connection connection;
 }
