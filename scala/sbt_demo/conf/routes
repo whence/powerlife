@@ -4,4 +4,4 @@
 
 # Home page
 
-GET        /greetings                    controllers.GreeterController.greet
+GET        /                    controllers.Application.index

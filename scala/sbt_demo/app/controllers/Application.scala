@@ -1,13 +1,12 @@
 package controllers
 
-import org.joda.time.LocalDateTime
-import play.api._
-import play.api.libs.json.{Format, Json}
-import play.api.mvc._
-import play.api.libs._
+import play.api.libs.json.Json
+import play.api.mvc.{Action, Controller}
+import sbt_demo_core.Utils
+import sbt_demo_services.HelloService
 
-object Application extends Controller {
+class Application extends Controller {
   def index = Action {
-    Ok(views.html.index("hello"))
+    Ok(Json.toJson(s"hello world and ${Utils.hello} and ${HelloService.hello}"))
   }
 }

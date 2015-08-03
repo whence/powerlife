@@ -11,9 +11,15 @@ lazy val commonSettings = Seq(
 lazy val root = (project in file("."))
   .settings(commonSettings: _*)
   .settings(
-    name := "sbt_demo"
+    name := "sbt_demo",
+    libraryDependencies ++= Seq(
+      "org.scalatestplus" %% "play" % "1.4.0-M3" % Test
+    )
   )
   .enablePlugins(PlayScala)
+  .settings(
+    routesGenerator := InjectedRoutesGenerator
+  )
   .aggregate(core, services, repositories)
   .dependsOn(core, services)
 
