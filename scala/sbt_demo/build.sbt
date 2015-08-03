@@ -1,8 +1,12 @@
-lazy val root = (project in file(".")).
-  settings(
-    name := "sbt_demo",
-    version := "1.0",
-    scalaVersion := "2.11.7",
+name := "sbt_demo"
+
+version := "1.0"
+
+scalaVersion := "2.11.7"
+
+lazy val root = (project in file("."))
+  .enablePlugins(PlayScala)
+  .settings(
     libraryDependencies ++= Seq(
       "org.scalatest" % "scalatest_2.11" % "2.2.4" % Test,
       "org.scalactic" % "scalactic_2.11" % "2.2.4",
