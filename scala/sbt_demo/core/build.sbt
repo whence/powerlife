@@ -1,4 +1,4 @@
-name := "sbt_demo"
+name := "sbt_demo_core"
 
 version := "1.0"
 
@@ -9,10 +9,3 @@ libraryDependencies ++= Seq(
   "org.scalactic" % "scalactic_2.11" % "2.2.4",
   "org.scalamock" %% "scalamock-scalatest-support" % "3.2" % Test
 )
-
-lazy val root = (project in file("."))
-  .enablePlugins(PlayScala)
-  .aggregate(sbt_demo_core)
-  .dependsOn(sbt_demo_core)
-
-lazy val sbt_demo_core = (project in file("core"))
